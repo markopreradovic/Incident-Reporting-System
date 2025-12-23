@@ -1,0 +1,10 @@
+# Visual Studio cache/index
+.vs/
+
+# Visual Studio generated files
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
