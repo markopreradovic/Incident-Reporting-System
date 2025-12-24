@@ -3,9 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Dodaj DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql("Host=172.17.0.3;Port=5432;Database=incidentdb;Username=postgres;Password=postgres;"));
-
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Host=localhost;Port=5432;Database=incidentdb;Username=postgres;Password=postgres"));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -13,21 +14,23 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Automatski primijeni migracije pri pokretanju
+
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     try
     {
-        var context = services.GetRequiredService<AppDbContext>();
-        context.Database.Migrate(); // Ovo će kreirati bazu i primijeniti migracije
+       
+        db.Database.Migrate();
+        app.Logger.LogInformation("Migracije uspješno primijenjene.");
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Greška pri kreiranju baze podataka");
+        app.Logger.LogWarning(ex, "Ne mogu primijeniti migracije – vjerovatno PostgreSQL nije pokrenut. Aplikacija nastavlja bez baze.");
+       
     }
 }
+// ----------------------------------------------------------------------------------
 
 if (app.Environment.IsDevelopment())
 {
@@ -39,3 +42,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+//builder.Services.AddDbContext<AppDbContext>(options =>
+//options.UseNpgsql("Host=172.17.0.3;Port=5432;Database=incidentdb;Username=postgres;Password=postgres;"));

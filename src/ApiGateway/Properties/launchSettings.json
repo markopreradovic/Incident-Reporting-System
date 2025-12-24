@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ApiGateway": {
+      "commandName": "Project",
+      "launchUrl": "http://localhost:5000",
+      "applicationUrl": "http://localhost:5000"
+    }
+  }
+}
