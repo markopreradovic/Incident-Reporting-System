@@ -5,8 +5,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5048
+          "Host": "incident-service",
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/api/{everything}",

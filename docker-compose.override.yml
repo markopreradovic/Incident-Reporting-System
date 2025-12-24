@@ -1,0 +1,12 @@
+services:
+  incident-service:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "5048:80"
+
+  api-gateway:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "5000:80"
