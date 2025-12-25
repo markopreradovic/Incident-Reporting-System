@@ -10,3 +10,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
     ports:
       - "5000:80"
+  moderation-service:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "6000:80"   
