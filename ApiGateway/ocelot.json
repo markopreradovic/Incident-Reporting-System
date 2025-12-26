@@ -23,6 +23,18 @@
       ],
       "UpstreamPathTemplate": "/api/moderation/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/incidents/approved",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "incident-service",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/incidents/approved",
+      "UpstreamHttpMethod": [ "GET" ]
     }
   ]
 }

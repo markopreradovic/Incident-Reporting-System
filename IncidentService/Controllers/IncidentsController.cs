@@ -51,4 +51,29 @@ public class IncidentsController : ControllerBase
         if (incident == null) return NotFound();
         return incident;
     }
+
+    [HttpGet("approved")]
+    public async Task<ActionResult<List<Incident>>> GetApproved(
+    [FromQuery] string? timeFilter = null,
+    [FromQuery] int? typeId = null)
+    {
+        var query = _db.Incidents.Where(i => i.Status == IncidentStatus.Approved);
+
+        if (typeId.HasValue)
+            query = query.Where(i => i.TypeId == typeId.Value);
+
+        if (!string.IsNullOrEmpty(timeFilter))
+        {
+            var now = DateTime.UtcNow;
+            query = timeFilter switch
+            {
+                "24h" => query.Where(i => i.CreatedAt >= now.AddHours(-24)),
+                "7d" => query.Where(i => i.CreatedAt >= now.AddDays(-7)),
+                "31d" => query.Where(i => i.CreatedAt >= now.AddDays(-31)),
+                _ => query
+            };
+        }
+
+        return await query.ToListAsync();
+    }
 }

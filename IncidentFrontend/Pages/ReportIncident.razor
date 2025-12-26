@@ -2,42 +2,360 @@
 @inject HttpClient Http
 @inject IJSRuntime JS
 
-<h3>Prijava incidenta</h3>
+<div class="dark-container">
+    <div class="header-section">
+        <h3 class="page-title">
+            <span class="icon">📍</span>
+            Prijava incidenta
+        </h3>
+    </div>
 
-<div id="map"></div>
+    <div id="map" class="map-container"></div>
 
-<div class="mt-4">
-    <label>Latitude: <input class="form-control" @bind="model.Latitude" /></label>
-    <label>Longitude: <input class="form-control" @bind="model.Longitude" /></label>
+    <div class="form-container">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">
+                    <span class="label-icon">🌐</span>
+                    Latitude
+                </label>
+                <input class="form-input" @bind="model.Latitude" type="number" step="0.000001" placeholder="44.772182" />
+            </div>
 
-    <label>Vrsta incidenta:</label>
-    <select class="form-control" @bind="model.TypeId">
-        <option value="1">Saobraćajni problem</option>
-        <option value="2">Komunalni problem</option>
-        <option value="3">Javni red i mir</option>
-    </select>
+            <div class="form-group">
+                <label class="form-label">
+                    <span class="label-icon">🌐</span>
+                    Longitude
+                </label>
+                <input class="form-input" @bind="model.Longitude" type="number" step="0.000001" placeholder="17.191000" />
+            </div>
+        </div>
 
-    <label>Podvrsta:</label>
-    <select class="form-control" @bind="model.SubTypeId">
-        <option value="1">Rupa na kolovozu</option>
-        <option value="2">Neispravna semaforska signalizacija</option>
-        <option value="3">Divlje deponije</option>
-        <option value="4">Neispravno javno osvjetljenje</option>
-    </select>
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon">🏷️</span>
+                Vrsta incidenta
+            </label>
+            <select class="form-select" @bind="model.TypeId">
+                <option value="1">🚗 Saobraćajni problem</option>
+                <option value="2">🏗️ Komunalni problem</option>
+                <option value="3">⚠️ Javni red i mir</option>
+            </select>
+        </div>
 
-    <label>Opis:</label>
-    <textarea class="form-control" @bind="model.Description"></textarea>
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon">📋</span>
+                Podvrsta
+            </label>
+            <select class="form-select" @bind="model.SubTypeId">
+                <option value="1">🕳️ Rupa na kolovozu</option>
+                <option value="2">🚦 Neispravna semaforska signalizacija</option>
+                <option value="3">🗑️ Divlje deponije</option>
+                <option value="4">💡 Neispravno javno osvjetljenje</option>
+            </select>
+        </div>
 
-    <label>Slika:</label>
-    <InputFile OnChange="HandleFileSelected" class="form-control" />
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon">✍️</span>
+                Opis incidenta
+            </label>
+            <textarea class="form-textarea" @bind="model.Description" rows="4" placeholder="Detaljno opišite incident..."></textarea>
+        </div>
 
-    <button class="btn btn-primary mt-3" @onclick="Submit">Prijavi incident</button>
+        <div class="form-group">
+            <label class="form-label">
+                <span class="label-icon">📷</span>
+                Slika (opcionalno)
+            </label>
+            <div class="file-input-wrapper">
+                <InputFile OnChange="HandleFileSelected" class="file-input" accept="image/*" />
+                <div class="file-input-display">
+                    <span class="upload-icon">⬆️</span>
+                    <span>Kliknite ili prevucite sliku</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="submit-button" @onclick="Submit">
+            <span class="button-icon">✅</span>
+            Prijavi incident
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert-success">
+            <span class="alert-icon">✓</span>
+            @message
+        </div>
+    }
+
+    <div class="header-section" style="margin-top: 3rem;">
+        <h3 class="page-title">
+            <span class="icon">✅</span>
+            Odobreni incidenti
+        </h3>
+    </div>
+
+    <div class="form-container" style="margin-bottom: 2rem;">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">
+                    <span class="label-icon">⏰</span>
+                    Filter po vremenu
+                </label>
+                <select class="form-select" @bind="filter.TimeFilter">
+                    <option value="">Sve</option>
+                    <option value="24h">⏱️ Zadnjih 24h</option>
+                    <option value="7d">📅 Zadnjih 7 dana</option>
+                    <option value="31d">📆 Zadnjih 31 dan</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <span class="label-icon">🏷️</span>
+                    Vrsta incidenta
+                </label>
+                <select class="form-select" @bind="filter.TypeId">
+                    <option value="0">Sve</option>
+                    <option value="1">🚗 Saobraćajni problem</option>
+                    <option value="2">🏗️ Komunalni problem</option>
+                    <option value="3">⚠️ Javni red i mir</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="submit-button" @onclick="LoadApproved">
+            <span class="button-icon">🔍</span>
+            Prikaži incidente
+        </button>
+    </div>
+
+    <div id="approved-map" class="map-container"></div>
 </div>
 
-@if (!string.IsNullOrEmpty(message))
-{
-    <div class="alert alert-success mt-3">@message</div>
-}
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap');
+
+    * {
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .dark-container {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        padding: 2rem;
+        color: #e0e0e0;
+    }
+
+    .header-section {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .icon {
+        font-size: 2.5rem;
+    }
+
+    .map-container {
+        height: 500px;
+        width: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        margin-bottom: 2rem;
+        border: 2px solid #2d3561;
+    }
+
+    .form-container {
+        background: rgba(30, 30, 50, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #b8c5d6;
+        font-size: 0.95rem;
+    }
+
+    .label-icon {
+        font-size: 1.1rem;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        background: rgba(20, 20, 35, 0.9);
+        border: 2px solid #2d3561;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+            background: rgba(20, 20, 35, 1);
+        }
+
+    .form-textarea {
+        resize: vertical;
+    }
+
+    .form-select {
+        cursor: pointer;
+    }
+
+    .file-input-wrapper {
+        position: relative;
+    }
+
+    .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .file-input-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: rgba(20, 20, 35, 0.9);
+        border: 2px dashed #2d3561;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+        .file-input-display:hover {
+            border-color: #4a9eff;
+            background: rgba(30, 30, 45, 0.9);
+        }
+
+    .upload-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .submit-button {
+        width: 100%;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+    .button-icon {
+        font-size: 1.3rem;
+    }
+
+    .alert-success {
+        margin-top: 1.5rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 8px;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        animation: slideIn 0.3s ease;
+    }
+
+    .alert-icon {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .dark-container {
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .map-container {
+            height: 350px;
+        }
+
+        .form-container {
+            padding: 1.5rem;
+        }
+    }
+</style>
 
 @code {
     private ReportModel model = new();
@@ -55,27 +373,6 @@
         }
     }
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
-    {
-        selectedFile = e.File;
-    }
-
-    private async Task Submit()
-    {
-        var response = await Http.PostAsJsonAsync("http://localhost:5000/api/incidents", model);
-        if (response.IsSuccessStatusCode)
-        {
-            message = "Incident uspješno prijavljen!";
-            model = new(); // reset forme
-            StateHasChanged();
-        }
-        else
-        {
-            message = "Greška pri prijavi: " + await response.Content.ReadAsStringAsync();
-        }
-    }
-
-    // OVA METODA SE POZIVA IZ JAVASCRIPTA
     [JSInvokable]
     public void SetLocation(double lat, double lng)
     {
@@ -84,19 +381,32 @@
         StateHasChanged();
     }
 
-    // Dodaj ovo
-    private static ReportIncident? currentInstance;
-
-    protected override void OnInitialized()
+    private void HandleFileSelected(InputFileChangeEventArgs e)
     {
-        currentInstance = this;
+        selectedFile = e.File;
     }
 
-    public void UpdateLocation(double lat, double lng)
+    private async Task Submit()
     {
-        model.Latitude = lat;
-        model.Longitude = lng;
-        StateHasChanged(); // ažuriraj UI
+        if (model.Latitude == 0 || model.Longitude == 0)
+        {
+            message = "Molimo odaberite lokaciju na mapi prije prijave!";
+            return;
+        }
+
+        var response = await Http.PostAsJsonAsync("http://localhost:5000/api/incidents", model);
+
+        if (response.IsSuccessStatusCode)
+        {
+            message = "Incident uspješno prijavljen!";
+            model = new ReportModel { TypeId = 1 };
+        }
+        else
+        {
+            message = "Greška pri prijavi incidenta.";
+        }
+
+        StateHasChanged();
     }
 
     public class ReportModel
@@ -111,5 +421,36 @@
     public void Dispose()
     {
         dotNetHelper?.Dispose();
+    }
+
+    private FilterModel filter = new();
+    private List<Incident> approvedIncidents = new();
+
+    private async Task LoadApproved()
+    {
+        var query = new Dictionary<string, string>();
+        if (!string.IsNullOrEmpty(filter.TimeFilter)) query["timeFilter"] = filter.TimeFilter;
+        if (filter.TypeId > 0) query["typeId"] = filter.TypeId.ToString();
+
+        var response = await Http.GetAsync("http://localhost:5000/api/incidents/approved?" + string.Join("&", query.Select(kv => $"{kv.Key}={kv.Value}")));
+        if (response.IsSuccessStatusCode)
+        {
+            approvedIncidents = await response.Content.ReadFromJsonAsync<List<Incident>>() ?? new();
+            await JS.InvokeVoidAsync("showApprovedOnMap", approvedIncidents);
+        }
+    }
+
+    public class FilterModel
+    {
+        public string TimeFilter { get; set; } = "";
+        public int TypeId { get; set; } = 0;
+    }
+
+    public class Incident
+    {
+        public int Id { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public string Description { get; set; } = "";
     }
 }

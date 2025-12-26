@@ -32,3 +32,21 @@
         });
     }
 };
+
+window.showApprovedOnMap = (incidents) => {
+    // Ako mapa za odobrene već postoji, obriši je
+    if (window.approvedMap) {
+        window.approvedMap.remove();
+    }
+
+    const map = L.map('approved-map').setView([44.7722, 17.1911], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    incidents.forEach(inc => {
+        L.marker([inc.latitude, inc.longitude])
+            .addTo(map)
+            .bindPopup(`<b>${inc.description}</b><br>ID: ${inc.id}`);
+    });
+
+    window.approvedMap = map;
+};
