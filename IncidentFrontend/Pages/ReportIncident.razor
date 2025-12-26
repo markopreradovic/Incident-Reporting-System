@@ -1,0 +1,115 @@
+﻿@page "/report"
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<h3>Prijava incidenta</h3>
+
+<div id="map"></div>
+
+<div class="mt-4">
+    <label>Latitude: <input class="form-control" @bind="model.Latitude" /></label>
+    <label>Longitude: <input class="form-control" @bind="model.Longitude" /></label>
+
+    <label>Vrsta incidenta:</label>
+    <select class="form-control" @bind="model.TypeId">
+        <option value="1">Saobraćajni problem</option>
+        <option value="2">Komunalni problem</option>
+        <option value="3">Javni red i mir</option>
+    </select>
+
+    <label>Podvrsta:</label>
+    <select class="form-control" @bind="model.SubTypeId">
+        <option value="1">Rupa na kolovozu</option>
+        <option value="2">Neispravna semaforska signalizacija</option>
+        <option value="3">Divlje deponije</option>
+        <option value="4">Neispravno javno osvjetljenje</option>
+    </select>
+
+    <label>Opis:</label>
+    <textarea class="form-control" @bind="model.Description"></textarea>
+
+    <label>Slika:</label>
+    <InputFile OnChange="HandleFileSelected" class="form-control" />
+
+    <button class="btn btn-primary mt-3" @onclick="Submit">Prijavi incident</button>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert alert-success mt-3">@message</div>
+}
+
+@code {
+    private ReportModel model = new();
+    private IBrowserFile? selectedFile;
+    private string message = "";
+
+    private DotNetObjectReference<ReportIncident>? dotNetHelper;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetHelper = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("initMap", dotNetHelper);
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    private async Task Submit()
+    {
+        var response = await Http.PostAsJsonAsync("http://localhost:5000/api/incidents", model);
+        if (response.IsSuccessStatusCode)
+        {
+            message = "Incident uspješno prijavljen!";
+            model = new(); // reset forme
+            StateHasChanged();
+        }
+        else
+        {
+            message = "Greška pri prijavi: " + await response.Content.ReadAsStringAsync();
+        }
+    }
+
+    // OVA METODA SE POZIVA IZ JAVASCRIPTA
+    [JSInvokable]
+    public void SetLocation(double lat, double lng)
+    {
+        model.Latitude = Math.Round(lat, 6);
+        model.Longitude = Math.Round(lng, 6);
+        StateHasChanged();
+    }
+
+    // Dodaj ovo
+    private static ReportIncident? currentInstance;
+
+    protected override void OnInitialized()
+    {
+        currentInstance = this;
+    }
+
+    public void UpdateLocation(double lat, double lng)
+    {
+        model.Latitude = lat;
+        model.Longitude = lng;
+        StateHasChanged(); // ažuriraj UI
+    }
+
+    public class ReportModel
+    {
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public int TypeId { get; set; } = 1;
+        public int? SubTypeId { get; set; }
+        public string Description { get; set; } = "";
+    }
+
+    public void Dispose()
+    {
+        dotNetHelper?.Dispose();
+    }
+}
