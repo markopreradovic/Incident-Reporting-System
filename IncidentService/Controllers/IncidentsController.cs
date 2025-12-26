@@ -86,6 +86,23 @@ public class IncidentsController : ControllerBase
         return Ok(incidents);
     }
 
+    [HttpPost("upload-image")]
+    public async Task<ActionResult<string>> UploadImage(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded");
+
+        var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+        var filePath = Path.Combine("wwwroot/images/incidents", fileName);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+
+        await using var stream = new FileStream(filePath, FileMode.Create);
+        await file.CopyToAsync(stream);
+
+        return Ok($"/images/incidents/{fileName}");
+    }
+
     public class IncidentDto
     {
         public int Id { get; set; }

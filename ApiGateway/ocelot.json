@@ -35,6 +35,18 @@
       ],
       "UpstreamPathTemplate": "/api/incidents/approved",
       "UpstreamHttpMethod": [ "GET" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/incidents/upload-image",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "incident-service",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/incidents/upload-image",
+      "UpstreamHttpMethod": [ "POST" ]
     }
   ],
   "GlobalConfiguration": {
