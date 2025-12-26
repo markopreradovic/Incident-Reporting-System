@@ -15,7 +15,6 @@
             .bindPopup("Odabrana lokacija")
             .openPopup();
 
-        // Pošalji koordinate u C#
         dotNetHelper.invokeMethodAsync('SetLocation', e.latlng.lat, e.latlng.lng);
     });
 
@@ -34,7 +33,6 @@
 };
 
 window.showApprovedOnMap = (incidents) => {
-    // Ako mapa za odobrene već postoji, obriši je
     if (window.approvedMap) {
         window.approvedMap.remove();
     }

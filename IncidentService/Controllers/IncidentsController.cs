@@ -51,18 +51,17 @@ public class IncidentsController : ControllerBase
         if (incident == null) return NotFound();
         return incident;
     }
-
     [HttpGet("approved")]
     public async Task<ActionResult<List<Incident>>> GetApproved(
-    [FromQuery] string? timeFilter = null,
-    [FromQuery] int? typeId = null)
+        [FromQuery] string timeFilter = null,
+        [FromQuery] int? typeId = null)
     {
         var query = _db.Incidents.Where(i => i.Status == IncidentStatus.Approved);
 
         if (typeId.HasValue)
             query = query.Where(i => i.TypeId == typeId.Value);
 
-        if (!string.IsNullOrEmpty(timeFilter))
+        if (timeFilter != null)
         {
             var now = DateTime.UtcNow;
             query = timeFilter switch
@@ -74,6 +73,27 @@ public class IncidentsController : ControllerBase
             };
         }
 
-        return await query.ToListAsync();
+        var incidents = await query.Select(i => new IncidentDto
+        {
+            Id = i.Id,
+            Latitude = i.Latitude,
+            Longitude = i.Longitude,
+            Description = i.Description ?? "Bez opisa",
+            TypeId = i.TypeId,
+            Status = i.Status
+        }).ToListAsync();
+
+        return Ok(incidents);
     }
+
+    public class IncidentDto
+    {
+        public int Id { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public string Description { get; set; } = "";
+        public int TypeId { get; set; }
+        public IncidentStatus Status { get; set; }
+    }
+
 }

@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Dodaj DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Host=localhost;Port=5432;Database=incidentdb;Username=postgres;Password=postgres"));
@@ -26,11 +25,10 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        app.Logger.LogWarning(ex, "Ne mogu primijeniti migracije – vjerovatno PostgreSQL nije pokrenut. Aplikacija nastavlja bez baze.");
+        app.Logger.LogWarning(ex, "Aplikacija nastavlja bez baze.");
        
     }
 }
-// ----------------------------------------------------------------------------------
 
 if (app.Environment.IsDevelopment())
 {
