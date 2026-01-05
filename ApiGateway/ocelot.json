@@ -1,16 +1,17 @@
 {
   "Routes": [
     {
-      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamPathTemplate": "/api/auth/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "incident-service",
-          "Port": 80
+          "Host": "user-service",
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/api/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+      "UpstreamPathTemplate": "/api/auth/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Priority": 10
     },
     {
       "DownstreamPathTemplate": "/api/moderation/{everything}",
@@ -18,14 +19,15 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "moderation-service",
-          "Port": 80
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/api/moderation/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST" ]
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Priority": 10
     },
     {
-      "DownstreamPathTemplate": "/api/incidents/approved",
+      "DownstreamPathTemplate": "/api/incidents/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -33,20 +35,9 @@
           "Port": 80
         }
       ],
-      "UpstreamPathTemplate": "/api/incidents/approved",
-      "UpstreamHttpMethod": [ "GET" ]
-    },
-    {
-      "DownstreamPathTemplate": "/api/incidents/upload-image",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "incident-service",
-          "Port": 80
-        }
-      ],
-      "UpstreamPathTemplate": "/api/incidents/upload-image",
-      "UpstreamHttpMethod": [ "POST" ]
+      "UpstreamPathTemplate": "/api/incidents/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Priority": 10
     }
   ],
   "GlobalConfiguration": {

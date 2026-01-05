@@ -1,0 +1,80 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Incident Reporting System</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Početna
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="report">
+                <span class="oi oi-map" aria-hidden="true"></span> Prijava incidenta
+            </NavLink>
+        </div>
+
+        <!-- Moderatorski panel – vidljiv samo korisnicima sa ulogom Moderator -->
+        <AuthorizeView Roles="Moderator">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="moderation">
+                    <span class="oi oi-check" aria-hidden="true"></span> Moderacija incidenata
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+        <!-- Autentifikacija sekcija -->
+        <div class="nav-item px-3 mt-4">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="d-flex align-items-center text-light">
+                        <span class="me-3">
+                            Dobrodošao, <strong>@context.User.Identity?.Name</strong>
+                        </span>
+                        <button class="btn btn-outline-light btn-sm" @onclick="Logout">
+                            Odjavi se
+                        </button>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <button class="btn btn-primary" @onclick="Login">
+                        Prijavi se
+                    </button>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void Login()
+    {
+        Navigation.NavigateTo("/login");
+    }
+
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        Navigation.NavigateTo("/", true); // force reload
+    }
+}

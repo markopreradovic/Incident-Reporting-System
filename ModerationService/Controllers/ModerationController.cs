@@ -1,4 +1,5 @@
 ﻿using IncidentService.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ModerationService.Data;
@@ -7,6 +8,7 @@ namespace ModerationService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ModerationController : ControllerBase
 {
     private readonly ModerationDbContext _db;

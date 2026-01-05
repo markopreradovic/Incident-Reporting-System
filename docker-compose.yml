@@ -48,6 +48,18 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+    
+  user-service:
+    build:
+      context: ./UserService
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    depends_on:
+      - postgres
+    ports:
+      - "7000:8080"
 
 volumes:
   postgres_data:

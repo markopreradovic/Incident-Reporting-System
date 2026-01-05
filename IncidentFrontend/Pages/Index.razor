@@ -1,0 +1,28 @@
+﻿@page "/"
+
+<div class="container mt-5 text-center">
+    <h1 class="display-4 mb-5">Incident Reporting System</h1>
+
+    <AuthorizeView>
+        <Authorized>
+            <div class="alert alert-success p-5">
+                <h4>Dobrodošli, <strong>@context.User.Identity?.Name</strong>!</h4>
+                <p class="lead mt-3">Možete prijaviti novi incident ili pregledati odobrene na mapi.</p>
+                <a href="report" class="btn btn-primary btn-lg mt-4">
+                    <span style="font-size: 1.5rem;">📍</span> Prijava incidenta
+                </a>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="alert alert-warning p-5">
+                <h4>Morate se prijaviti da biste koristili aplikaciju</h4>
+                <p class="lead mt-4">
+                    Pristup je dozvoljen samo registrovanim korisnicima.
+                </p>
+                <a href="/login" class="btn btn-success btn-lg mt-4">
+                    <span style="font-size: 1.5rem;">🔑</span> Prijavi se
+                </a>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
