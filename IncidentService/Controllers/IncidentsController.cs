@@ -90,12 +90,21 @@ public class IncidentsController : ControllerBase
     public async Task<ActionResult<string>> UploadImage(IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded");
+            return BadRequest("No file uploaded.");
 
-        var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
-        var filePath = Path.Combine("wwwroot/images/incidents", fileName);
+        if (file.Length > 5 * 1024 * 1024) // max 5MB
+            return BadRequest("File too large (max 5MB).");
 
-        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowedExtensions.Contains(extension))
+            return BadRequest("Invalid file type.");
+
+        var fileName = Guid.NewGuid() + extension;
+        var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/incidents");
+        Directory.CreateDirectory(folderPath);
+
+        var filePath = Path.Combine(folderPath, fileName);
 
         await using var stream = new FileStream(filePath, FileMode.Create);
         await file.CopyToAsync(stream);

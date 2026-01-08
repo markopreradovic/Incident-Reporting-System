@@ -41,6 +41,30 @@
       "UpstreamPathTemplate": "/api/incidents/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
       "Priority": 10
+    },
+    {
+      "DownstreamPathTemplate": "/api/incidents/upload-image",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "incident-service",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/api/incidents/upload-image",
+      "UpstreamHttpMethod": [ "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/images/incidents/{fileName}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "incident-service",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/images/incidents/{fileName}",
+      "UpstreamHttpMethod": [ "GET" ]
     }
   ],
   "GlobalConfiguration": {
