@@ -62,34 +62,48 @@
     private bool isLoading = false;
 
     private async Task HandleLogin()
+{
+    isLoading = true;
+    message = "";
+    StateHasChanged();
+
+    var response = await Http.PostAsJsonAsync("http://localhost:5000/api/auth/login", model);
+
+    if (response.IsSuccessStatusCode)
     {
-        isLoading = true;
-        message = "";
-        StateHasChanged();
+        var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
 
-        var response = await Http.PostAsJsonAsync("http://localhost:5000/api/auth/login", model);
+        // Sačuvaj token
+        await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result!.Token);
 
-        if (response.IsSuccessStatusCode)
+        // Obavijesti JwtAuthenticationStateProvider da se stanje promijenilo
+        ((JwtAuthenticationStateProvider)AuthProvider).NotifyUserChanged();
+
+        // Dobij trenutni AuthenticationState
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        message = $"Dobrodošao, {user.Identity?.Name ?? model.Username}!";
+        isSuccess = true;
+
+        // Provjeri da li korisnik ima ulogu Moderator
+        if (user.IsInRole("Moderator"))
         {
-            var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
-            // Sačuvaj JWT token u LocalStorage
-            await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result!.Token);
-
-            message = $"Dobrodošao, {result.User.UserName}!";
-            isSuccess = true;
-
-            // Preusmjeri na početnu
-            Navigation.NavigateTo("/", true);
+            Navigation.NavigateTo("/moderation", true);
         }
         else
         {
-            message = "Pogrešno korisničko ime ili lozinka.";
-            isSuccess = false;
+            Navigation.NavigateTo("/", true);
         }
-
+    }
+    else
+    {
+        message = "Pogrešno korisničko ime ili lozinka.";
+        isSuccess = false;
         isLoading = false;
         StateHasChanged();
     }
+}
 
     public class LoginModel
     {

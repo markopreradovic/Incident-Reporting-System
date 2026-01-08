@@ -24,7 +24,10 @@
       ],
       "UpstreamPathTemplate": "/api/moderation/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
-      "Priority": 10
+      "Priority": 10,
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      }
     },
     {
       "DownstreamPathTemplate": "/api/incidents/{everything}",

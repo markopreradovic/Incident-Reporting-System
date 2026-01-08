@@ -1,4 +1,7 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <div class="container mt-5 text-center">
     <h1 class="display-4 mb-5">Incident Reporting System</h1>
@@ -7,10 +10,17 @@
         <Authorized>
             <div class="alert alert-success p-5">
                 <h4>Dobrodošli, <strong>@context.User.Identity?.Name</strong>!</h4>
-                <p class="lead mt-3">Možete prijaviti novi incident ili pregledati odobrene na mapi.</p>
-                <a href="report" class="btn btn-primary btn-lg mt-4">
-                    <span style="font-size: 1.5rem;">📍</span> Prijava incidenta
-                </a>
+                <p class="lead mt-4">Možete prijaviti novi incident ili pregledati odobrene na mapi.</p>
+
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="report" class="btn btn-primary btn-lg">
+                        <span style="font-size: 1.5rem;">📍</span> Prijava incidenta
+                    </a>
+
+                    <button class="btn btn-outline-danger btn-lg" @onclick="Logout">
+                        <span style="font-size: 1.5rem;">🚪</span> Odjavi se
+                    </button>
+                </div>
             </div>
         </Authorized>
         <NotAuthorized>
@@ -26,3 +36,13 @@
         </NotAuthorized>
     </AuthorizeView>
 </div>
+
+@code {
+    private async Task Logout()
+    {
+        // Obriši token iz LocalStorage
+        await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        // Preusmjeri na početnu (force reload da se stanje osvježi)
+        Navigation.NavigateTo("/", true);
+    }
+}

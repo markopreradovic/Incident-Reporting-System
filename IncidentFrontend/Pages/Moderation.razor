@@ -1,0 +1,135 @@
+﻿@page "/moderation"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Moderator")]
+@inject IHttpClientFactory HttpClientFactory
+@inject IJSRuntime JS
+
+<PageTitle>Moderacija incidenata</PageTitle>
+
+<h1 class="text-center mb-5">Moderatorski panel</h1>
+
+@if (isLoading)
+{
+    <p class="text-center"><em>Učitavanje pending incidenata...</em></p>
+}
+else if (!pendingIncidents.Any())
+{
+    <div class="alert alert-info text-center">
+        <h4>Nema pending incidenata za moderaciju</h4>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var incident in pendingIncidents)
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Incident ID: @incident.Id</h5>
+                        <p><strong>Lokacija:</strong> @incident.Latitude, @incident.Longitude</p>
+                        <p><strong>Vrsta:</strong> @incident.TypeId</p>
+                        <p><strong>Opis:</strong> @incident.Description</p>
+                        <p><strong>Datum:</strong> @incident.CreatedAt.ToString("dd.MM.yyyy HH:mm")</p>
+                        <div class="mt-3">
+                            <button class="btn btn-success me-2" @onclick="() => Approve(incident.Id)" disabled="@isProcessing">
+                                Odobri
+                            </button>
+                            <button class="btn btn-danger" @onclick="() => Reject(incident.Id)" disabled="@isProcessing">
+                                Odbij
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isSuccess ? "alert-success" : "alert-danger") mt-4 text-center">
+        @message
+    </div>
+}
+
+@code {
+    private HttpClient _http = default!;
+    private List<PendingIncident> pendingIncidents = new();
+    private bool isLoading = true;
+    private bool isProcessing = false;
+    private string message = "";
+    private bool isSuccess = false;
+
+    protected override void OnInitialized()
+    {
+        _http = HttpClientFactory.CreateClient("AuthenticatedClient");
+        LoadPending();
+    }
+
+    private async Task LoadPending()
+    {
+        isLoading = true;
+        message = "";
+        StateHasChanged();
+
+        var response = await _http.GetAsync("/api/moderation/pending");
+
+        if (response.IsSuccessStatusCode)
+        {
+            pendingIncidents = await response.Content.ReadFromJsonAsync<List<PendingIncident>>() ?? new();
+        }
+        else
+        {
+            message = "Greška pri učitavanju incidenata.";
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task Approve(int id)
+    {
+        await ChangeStatus(id, "odobren");
+    }
+
+    private async Task Reject(int id)
+    {
+        await ChangeStatus(id, "odbijen");
+    }
+
+    private async Task ChangeStatus(int id, string action)
+    {
+        isProcessing = true;
+        StateHasChanged();
+
+        var endpoint = action == "odobren" ? $"approve/{id}" : $"reject/{id}";
+        var response = await _http.PostAsync($"/api/moderation/{endpoint}", null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            message = $"Incident {id} uspješno {action}!";
+            isSuccess = true;
+            await LoadPending(); // osvježi listu
+        }
+        else
+        {
+            message = $"Greška pri {action}ju incidenta {id}.";
+            isSuccess = false;
+        }
+
+        isProcessing = false;
+        StateHasChanged();
+    }
+
+    public class PendingIncident
+    {
+        public int Id { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public int TypeId { get; set; }
+        public int? SubTypeId { get; set; }
+        public string Description { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+    }
+}

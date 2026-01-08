@@ -10,11 +10,15 @@ using UserService.Models;
 namespace UserService.Controllers;
 
 [ApiController]
-[Route("api/auth")]
+[Route("api/auth")] // Fiksna ruta – Ocelot je podešen na /api/auth/{catchAll}
 public class AuthController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
+
+    private const string SecretKey = "tvoj-super-tajni-kljuc-od-barem-32-karaktera!!";
+    private const string Issuer = "IncidentSystem";
+    private const string Audience = "IncidentSystem";
 
     public AuthController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
     {
@@ -25,73 +29,92 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginModel model)
     {
+        if (string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password))
+            return BadRequest("Korisničko ime i lozinka su obavezni.");
+
         var user = await _userManager.FindByNameAsync(model.Username);
-        if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+        if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
+            return Unauthorized("Pogrešno korisničko ime ili lozinka.");
+
+        // Dohvati sve uloge korisnika
+        var roles = await _userManager.GetRolesAsync(user);
+
+        // Kreiraj claims
+        var claims = new List<Claim>
         {
-            var roles = await _userManager.GetRolesAsync(user);
-            var role = roles.FirstOrDefault() ?? "User";
+            new Claim(ClaimTypes.Name, user.UserName!),
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
 
-            var claims = new List<Claim>
+        // Dodaj sve uloge kao posebne claim-ove (standardni način)
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+        // Generiši JWT token
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: Issuer,
+            audience: Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddDays(7),
+            signingCredentials: creds
+        );
+
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+        return Ok(new
+        {
+            token = tokenString,
+            user = new
             {
-                new Claim(ClaimTypes.Name, user.UserName!),
-                new Claim(ClaimTypes.Role, role)
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("tvoj-super-tajni-kljuc-od-barem-32-karaktera!!"));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: "IncidentSystem",
-                audience: "IncidentSystem",
-                claims: claims,
-                expires: DateTime.Now.AddDays(7),
-                signingCredentials: creds
-            );
-
-            return Ok(new
-            {
-                token = new JwtSecurityTokenHandler().WriteToken(token),
-                user = new { user.UserName, user.FullName, role }
-            });
-        }
-
-        return Unauthorized("Pogrešno korisničko ime ili lozinka.");
+                user.Id,
+                user.UserName,
+                user.Email,
+                user.FullName,
+                roles
+            }
+        });
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterModel model)
     {
+        if (string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password))
+            return BadRequest("Korisničko ime i lozinka su obavezni.");
+
         var user = new AppUser
         {
-            UserName = model.Username,
-            Email = model.Email,
-            FullName = model.FullName
+            UserName = model.Username.Trim(),
+            Email = model.Email?.Trim(),
+            FullName = model.FullName?.Trim() ?? ""
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
 
         if (result.Succeeded)
         {
-            await _userManager.AddToRoleAsync(user, model.Role ?? "User");
-            return Ok("Korisnik uspješno kreiran.");
+            var role = string.IsNullOrWhiteSpace(model.Role) ? "User" : model.Role.Trim();
+            await _userManager.AddToRoleAsync(user, role);
+
+            return Ok(new { message = "Korisnik uspješno kreiran.", role });
         }
 
-        return BadRequest(result.Errors);
+        return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
     }
 
+    // Test endpoint – lista svih korisnika sa ulogama
     [HttpGet("users")]
     public async Task<IActionResult> GetAllUsers()
     {
-        var users = await _userManager.Users
-            .AsNoTracking()
-            .ToListAsync();
+        var users = await _userManager.Users.AsNoTracking().ToListAsync();
 
         var result = new List<object>();
 
         foreach (var u in users)
         {
             var roles = await _userManager.GetRolesAsync(u);
-
             result.Add(new
             {
                 u.Id,
@@ -104,7 +127,6 @@ public class AuthController : ControllerBase
 
         return Ok(result);
     }
-
 }
 
 public class LoginModel
