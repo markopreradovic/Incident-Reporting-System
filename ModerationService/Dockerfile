@@ -13,4 +13,7 @@ EXPOSE 80
 
 COPY --from=build /app/publish .
 
+# ✅ Kreiraj wwwroot direktorijum pre nego što se montira volume
+RUN mkdir -p /app/wwwroot/images/incidents
+
 ENTRYPOINT ["dotnet", "ModerationService.dll"]

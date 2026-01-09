@@ -31,12 +31,26 @@ public class ModerationController : ControllerBase
                 TypeId = i.TypeId,
                 SubTypeId = i.SubTypeId,
                 Description = i.Description,
+                ImageUrl = i.ImageUrl,  // DODANO – ovo je ključ!
                 CreatedAt = i.CreatedAt
             })
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync();
 
         return Ok(pending);
+    }
+
+    // DTO klasa (dodaj ako nema)
+    public class PendingIncidentDto
+    {
+        public int Id { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public int TypeId { get; set; }
+        public int? SubTypeId { get; set; }
+        public string Description { get; set; } = "";
+        public string? ImageUrl { get; set; }  // Dodaj ovo polje
+        public DateTime CreatedAt { get; set; }
     }
 
     [HttpPost("approve/{id}")]
@@ -78,5 +92,6 @@ public class PendingIncidentDto
     public int TypeId { get; set; }
     public int? SubTypeId { get; set; }
     public string Description { get; set; } = "";
+    public string? ImageUrl { get; set; }
     public DateTime CreatedAt { get; set; }
 }

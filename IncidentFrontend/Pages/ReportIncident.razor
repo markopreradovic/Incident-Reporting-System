@@ -429,7 +429,7 @@
     private string message = "";
     private bool isSuccess = false;
     private bool isSubmitting = false;
-
+    private const string GATEWAY_URL = "http://localhost:5000";
     private DotNetObjectReference<ReportIncident>? dotNetHelper;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -562,17 +562,36 @@
 
         var queryString = string.Join("&", query.Select(kv => $"{kv.Key}={kv.Value}"));
         var url = string.IsNullOrEmpty(queryString)
-            ? "http://localhost:5000/api/incidents/approved"
-            : $"http://localhost:5000/api/incidents/approved?{queryString}";
+            ? $"{GATEWAY_URL}/api/incidents/approved"
+            : $"{GATEWAY_URL}/api/incidents/approved?{queryString}";
 
         var response = await Http.GetAsync(url);
         if (response.IsSuccessStatusCode)
         {
             approvedIncidents = await response.Content.ReadFromJsonAsync<List<Incident>>() ?? new();
+
+            // ✅ POPRAVKA: Koristite APSOLUTNE URL-ove preko API gateway-a
+            foreach (var incident in approvedIncidents)
+            {
+                if (!string.IsNullOrEmpty(incident.ImageUrl))
+                {
+                    // Ako je relativna putanja
+                    if (incident.ImageUrl.StartsWith("/"))
+                    {
+                        incident.ImageUrl = GATEWAY_URL + incident.ImageUrl;
+                    }
+                    else if (!incident.ImageUrl.StartsWith("http"))
+                    {
+                        incident.ImageUrl = GATEWAY_URL + "/" + incident.ImageUrl;
+                    }
+                }
+            }
+
+            // ✅ KORISTITE DRUGU FUNKCIJU
+            // Umesto showApprovedOnMap iz approvedMap.js, koristite onu iz map.js
             await JS.InvokeVoidAsync("showApprovedOnMap", approvedIncidents);
         }
     }
-
     public class FilterModel
     {
         public string TimeFilter { get; set; } = "";
@@ -584,7 +603,9 @@
         public int Id { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public int TypeId { get; set; }
         public string Description { get; set; } = "";
         public string? ImageUrl { get; set; }
+        public DateTime CreatedAt { get; set; } 
     }
 }

@@ -73,15 +73,17 @@ public class IncidentsController : ControllerBase
             };
         }
 
-        var incidents = await query.Select(i => new IncidentDto
-        {
-            Id = i.Id,
-            Latitude = i.Latitude,
-            Longitude = i.Longitude,
-            Description = i.Description ?? "Bez opisa",
-            TypeId = i.TypeId,
-            Status = i.Status
-        }).ToListAsync();
+        var incidents = await query
+             .Select(i => new {
+                 i.Id,
+                 i.Latitude,
+                 i.Longitude,
+                 i.TypeId,
+                 i.Description,
+                 i.ImageUrl,  // ✅ Relativni URL ostaje relativni
+                 i.CreatedAt
+             })
+             .ToListAsync();
 
         return Ok(incidents);
     }
@@ -103,13 +105,13 @@ public class IncidentsController : ControllerBase
         var fileName = Guid.NewGuid() + extension;
         var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/incidents");
         Directory.CreateDirectory(folderPath);
-
         var filePath = Path.Combine(folderPath, fileName);
 
         await using var stream = new FileStream(filePath, FileMode.Create);
         await file.CopyToAsync(stream);
 
-        return Ok($"/images/incidents/{fileName}");
+        var imageUrl = $"/images/incidents/{fileName}";
+        return Ok(imageUrl);
     }
 
     public class IncidentDto
@@ -117,9 +119,10 @@ public class IncidentsController : ControllerBase
         public int Id { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public int TypeId { get; set; }  
         public string Description { get; set; } = "";
-        public int TypeId { get; set; }
-        public IncidentStatus Status { get; set; }
+        public string? ImageUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 
 }

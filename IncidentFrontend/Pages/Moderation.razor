@@ -23,22 +23,32 @@ else
     <div class="row">
         @foreach (var incident in pendingIncidents)
         {
-            <div class="col-md-6 mb-4">
-                <div class="card h-100 shadow">
-                    <div class="card-body">
-                        <h5 class="card-title">Incident ID: @incident.Id</h5>
-                        <p><strong>Lokacija:</strong> @incident.Latitude, @incident.Longitude</p>
-                        <p><strong>Vrsta:</strong> @incident.TypeId</p>
-                        <p><strong>Opis:</strong> @incident.Description</p>
-                        <p><strong>Datum:</strong> @incident.CreatedAt.ToString("dd.MM.yyyy HH:mm")</p>
-                        <div class="mt-3">
-                            <button class="btn btn-success me-2" @onclick="() => Approve(incident.Id)" disabled="@isProcessing">
-                                Odobri
-                            </button>
-                            <button class="btn btn-danger" @onclick="() => Reject(incident.Id)" disabled="@isProcessing">
-                                Odbij
-                            </button>
-                        </div>
+            <div class="card h-100 shadow">
+                <div class="card-body">
+                    <h5 class="card-title">Incident ID: @incident.Id</h5>
+
+                    <!-- Prikaz slike ako postoji -->
+                    @if (!string.IsNullOrEmpty(incident.ImageUrl))
+                    {
+                        <img src="@incident.ImageUrl" alt="Slika incidenta" style="max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px;" />
+                    }
+                    else
+                    {
+                        <p class="text-muted">Nema slike</p>
+                    }
+
+                    <p><strong>Lokacija:</strong> @incident.Latitude, @incident.Longitude</p>
+                    <p><strong>Vrsta:</strong> @incident.TypeId</p>
+                    <p><strong>Opis:</strong> @incident.Description</p>
+                    <p><strong>Datum:</strong> @incident.CreatedAt.ToString("dd.MM.yyyy HH:mm")</p>
+
+                    <div class="mt-3">
+                        <button class="btn btn-success me-2" @onclick="() => Approve(incident.Id)">
+                            Odobri
+                        </button>
+                        <button class="btn btn-danger" @onclick="() => Reject(incident.Id)">
+                            Odbij
+                        </button>
                     </div>
                 </div>
             </div>
@@ -54,6 +64,9 @@ else
 }
 
 @code {
+    // ✅ DODAJTE gateway URL
+    private const string GATEWAY_URL = "http://localhost:5000";
+
     private HttpClient _http = default!;
     private List<PendingIncident> pendingIncidents = new();
     private bool isLoading = true;
@@ -78,6 +91,25 @@ else
         if (response.IsSuccessStatusCode)
         {
             pendingIncidents = await response.Content.ReadFromJsonAsync<List<PendingIncident>>() ?? new();
+
+            // ✅ APSOLUTNI URL preko API gateway-a
+            const string GATEWAY_URL = "http://localhost:5000";
+
+            foreach (var incident in pendingIncidents)
+            {
+                if (!string.IsNullOrEmpty(incident.ImageUrl))
+                {
+                    // Ako je relativna putanja
+                    if (incident.ImageUrl.StartsWith("/"))
+                    {
+                        incident.ImageUrl = GATEWAY_URL + incident.ImageUrl;
+                    }
+                    else if (!incident.ImageUrl.StartsWith("http"))
+                    {
+                        incident.ImageUrl = GATEWAY_URL + "/" + incident.ImageUrl;
+                    }
+                }
+            }
         }
         else
         {
@@ -110,7 +142,7 @@ else
         {
             message = $"Incident {id} uspješno {action}!";
             isSuccess = true;
-            await LoadPending(); // osvježi listu
+            await LoadPending();
         }
         else
         {
@@ -130,6 +162,7 @@ else
         public int TypeId { get; set; }
         public int? SubTypeId { get; set; }
         public string Description { get; set; } = "";
+        public string? ImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

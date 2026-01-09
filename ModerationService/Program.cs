@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using ModerationService.Data;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,6 +100,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "images", "incidents");
+if (!Directory.Exists(imagesPath))
+{
+    Directory.CreateDirectory(imagesPath);
+}
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(imagesPath),
+    RequestPath = "/images/incidents"
+});
 
 app.MapControllers();
 

@@ -1,5 +1,6 @@
 ﻿using IncidentService.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,14 +20,14 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     try
     {
-       
+
         db.Database.Migrate();
         app.Logger.LogInformation("Migracije uspješno primijenjene.");
     }
     catch (Exception ex)
     {
         app.Logger.LogWarning(ex, "Aplikacija nastavlja bez baze.");
-       
+
     }
 }
 
@@ -36,9 +37,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "incidents");
+Directory.CreateDirectory(imagesPath);
+
+// Serve static files from wwwroot directory
+app.UseStaticFiles();
 app.UseAuthorization();
 app.MapControllers();
-app.UseStaticFiles(); 
+
 
 
 app.Run();

@@ -23,6 +23,8 @@ services:
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=incidentdb;Username=postgres;Password=postgres
     depends_on:
       - postgres
+    volumes:
+      - incident_images:/app/wwwroot/images/incidents  # ✅
 
   api-gateway:
     container_name: api-gateway
@@ -35,7 +37,8 @@ services:
       - "5000:80"
     depends_on:
       - incident-service
-      
+      - moderation-service  # ✅ Dodajte i ovu zavisnost
+
   moderation-service:
     build:
       context: ./ModerationService
@@ -48,6 +51,8 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+    volumes:
+      - incident_images:/app/wwwroot/images/incidents  
     
   user-service:
     build:
@@ -63,3 +68,4 @@ services:
 
 volumes:
   postgres_data:
+  incident_images:

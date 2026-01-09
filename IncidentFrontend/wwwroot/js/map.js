@@ -33,39 +33,42 @@
 };
 
 window.showApprovedOnMap = (incidents) => {
-    if (!incidents || !Array.isArray(incidents)) {
-        console.warn('Nema incidenata za prikaz');
-        incidents = [];
+    if (!window.approvedMap) {
+        window.initApprovedMap();
     }
 
-    if (window.approvedMap) {
-        window.approvedMap.remove();
-    }
+    const map = window.approvedMap;
 
-    const map = L.map('approved-map').setView([44.7722, 17.1911], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    map.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+        }
+    });
 
     if (incidents.length === 0) {
         L.marker([44.7722, 17.1911]).addTo(map)
             .bindPopup("Nema odobrenih incidenata za odabrani filter")
             .openPopup();
-        window.approvedMap = map;
         return;
     }
 
+    const markers = [];
     incidents.forEach(inc => {
-        L.marker([inc.latitude, inc.longitude])
+        const popupContent = `
+        <b>${inc.description}</b><br>
+        ID: ${inc.id}<br>
+        Vrsta: ${inc.typeId}<br>
+        Datum: ${new Date(inc.createdAt).toLocaleString('sr-RS')}<br>
+        ${inc.imageUrl ? `<img src="${inc.imageUrl}" alt="Slika incidenta" style="max-width:200px; margin-top:8px; border-radius:6px;">` : '<i>Nema slike</i>'}
+    `;
+
+        const marker = L.marker([inc.latitude, inc.longitude])
             .addTo(map)
-            .bindPopup(`<b>${inc.description}</b><br>ID: ${inc.id}<br>Vrsta: ${inc.typeId}`);
+            .bindPopup(popupContent);
+
+        markers.push(marker);
     });
 
-    const group = new L.featureGroup(incidents.map(inc =>
-        L.marker([inc.latitude, inc.longitude])
-    ));
+    const group = new L.featureGroup(markers);
     map.fitBounds(group.getBounds().pad(0.1));
-
-    window.approvedMap = map;
 };
