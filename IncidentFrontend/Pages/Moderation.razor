@@ -6,65 +6,412 @@
 
 <PageTitle>Moderacija incidenata</PageTitle>
 
-<h1 class="text-center mb-5">Moderatorski panel</h1>
-
-@if (isLoading)
-{
-    <p class="text-center"><em>Učitavanje pending incidenata...</em></p>
-}
-else if (!pendingIncidents.Any())
-{
-    <div class="alert alert-info text-center">
-        <h4>Nema pending incidenata za moderaciju</h4>
+<div class="dark-container">
+    <div class="header-section">
+        <h3 class="page-title">
+            <span class="icon">🛡️</span>
+            Moderatorski panel
+        </h3>
     </div>
-}
-else
-{
-    <div class="row">
-        @foreach (var incident in pendingIncidents)
-        {
-            <div class="card h-100 shadow">
-                <div class="card-body">
-                    <h5 class="card-title">Incident ID: @incident.Id</h5>
 
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p class="loading-text">Učitavanje pending incidenata...</p>
+        </div>
+    }
+    else if (!pendingIncidents.Any())
+    {
+        <div class="alert-info">
+            <span class="alert-icon">ℹ️</span>
+            <span>Nema pending incidenata za moderaciju</span>
+        </div>
+    }
+    else
+    {
+        <div class="incidents-grid">
+            @foreach (var incident in pendingIncidents)
+            {
+                <div class="incident-card">
                     @if (!string.IsNullOrEmpty(incident.ImageUrl))
                     {
-                        <img src="@incident.ImageUrl" alt="Slika incidenta" style="max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px;" />
+                        <img src="@incident.ImageUrl" class="incident-image" alt="Slika incidenta" onerror="this.src='https://via.placeholder.com/400x200?text=Slika+nije+dostupna';" />
                     }
                     else
                     {
-                        <p class="text-muted">Nema slike</p>
+                        <div class="incident-image-placeholder">
+                            <span class="placeholder-icon">📷</span>
+                            <span class="placeholder-text">Nema slike</span>
+                        </div>
                     }
 
-                    <p><strong>Lokacija:</strong> @incident.Latitude, @incident.Longitude</p>
-                    <p><strong>Vrsta:</strong> @incident.TypeId</p>
-                    <p><strong>Opis:</strong> @incident.Description</p>
-                    <p><strong>Datum:</strong> @incident.CreatedAt.ToString("dd.MM.yyyy HH:mm")</p>
+                    <div class="incident-body">
+                        <h5 class="incident-title">Incident ID: @incident.Id</h5>
+                        <div class="incident-details">
+                            <div class="detail-item">
+                                <span class="detail-icon">🌐</span>
+                                <span class="detail-label">Lokacija:</span>
+                                <span class="detail-value">@incident.Latitude.ToString("F6"), @incident.Longitude.ToString("F6")</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon">🏷️</span>
+                                <span class="detail-label">Vrsta:</span>
+                                <span class="detail-value">@GetTypeName(incident.TypeId)</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon">✍️</span>
+                                <span class="detail-label">Opis:</span>
+                                <span class="detail-value">@incident.Description</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon">📅</span>
+                                <span class="detail-label">Datum:</span>
+                                <span class="detail-value">@incident.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                            </div>
+                        </div>
 
-                    <div class="mt-3">
-                        <button class="btn btn-success me-2" @onclick="() => Approve(incident.Id)">
-                            Odobri
-                        </button>
-                        <button class="btn btn-danger" @onclick="() => Reject(incident.Id)">
-                            Odbij
-                        </button>
+                        <div class="action-buttons">
+                            <button class="btn-approve" @onclick="() => Approve(incident.Id)" disabled="@isProcessing">
+                                <span class="button-icon">✅</span>
+                                <span>Odobri</span>
+                            </button>
+                            <button class="btn-reject" @onclick="() => Reject(incident.Id)" disabled="@isProcessing">
+                                <span class="button-icon">❌</span>
+                                <span>Odbij</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
-}
+            }
+        </div>
+    }
 
-@if (!string.IsNullOrEmpty(message))
-{
-    <div class="alert @(isSuccess ? "alert-success" : "alert-danger") mt-4 text-center">
-        @message
+    <div class="header-section" style="margin-top: 3rem;">
+        <h3 class="page-title">
+            <span class="icon">🗺️</span>
+            Mapa pending incidenata
+        </h3>
     </div>
-}
+
+    <div id="pending-map" class="map-container"></div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="@(isSuccess ? "alert-success" : "alert-danger")">
+            <span class="alert-icon">@(isSuccess ? "✓" : "✗")</span>
+            @message
+        </div>
+    }
+</div>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap');
+
+    * {
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .dark-container {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        padding: 2rem;
+        color: #e0e0e0;
+    }
+
+    .header-section {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .icon {
+        font-size: 2.5rem;
+    }
+
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 2rem;
+        background: rgba(30, 30, 50, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(74, 158, 255, 0.2);
+        border-top-color: #4a9eff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .loading-text {
+        margin-top: 1.5rem;
+        color: #b8c5d6;
+        font-size: 1.1rem;
+    }
+
+    .alert-info {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 12px;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+
+    .incidents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .incident-card {
+        background: rgba(30, 30, 50, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .incident-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+    .incident-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .incident-image-placeholder {
+        width: 100%;
+        height: 200px;
+        background: rgba(20, 20, 35, 0.9);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .placeholder-icon {
+        font-size: 3rem;
+        opacity: 0.5;
+    }
+
+    .placeholder-text {
+        color: #6b7280;
+        font-size: 1rem;
+    }
+
+    .incident-body {
+        padding: 1.5rem;
+    }
+
+    .incident-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0 0 1rem 0;
+    }
+
+    .incident-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .detail-icon {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #b8c5d6;
+        flex-shrink: 0;
+    }
+
+    .detail-value {
+        color: #e0e0e0;
+        word-break: break-word;
+    }
+
+    .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .btn-approve, .btn-reject {
+        padding: 0.875rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .btn-approve {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+        .btn-approve:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+    .btn-reject {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+        .btn-reject:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-approve:active:not(:disabled),
+        .btn-reject:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-approve:disabled,
+        .btn-reject:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+    .button-icon {
+        font-size: 1.2rem;
+    }
+
+    .map-container {
+        height: 500px;
+        width: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        margin-bottom: 2rem;
+        border: 2px solid #2d3561;
+    }
+
+    .alert-success {
+        margin-top: 1.5rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 8px;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        animation: slideIn 0.3s ease;
+        font-size: 1.05rem;
+    }
+
+    .alert-danger {
+        margin-top: 1.5rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-radius: 8px;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        animation: slideIn 0.3s ease;
+        font-size: 1.05rem;
+    }
+
+    .alert-icon {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .dark-container {
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .incidents-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .map-container {
+            height: 350px;
+        }
+
+        .action-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 @code {
     private const string GATEWAY_URL = "http://localhost:5000";
-
     private HttpClient _http = default!;
     private List<PendingIncident> pendingIncidents = new();
     private bool isLoading = true;
@@ -76,6 +423,15 @@ else
     {
         _http = HttpClientFactory.CreateClient("AuthenticatedClient");
         LoadPending();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initPendingMap");
+            await ShowPendingOnMap();
+        }
     }
 
     private async Task LoadPending()
@@ -90,22 +446,18 @@ else
         {
             pendingIncidents = await response.Content.ReadFromJsonAsync<List<PendingIncident>>() ?? new();
 
-            const string GATEWAY_URL = "http://localhost:5000";
-
             foreach (var incident in pendingIncidents)
             {
                 if (!string.IsNullOrEmpty(incident.ImageUrl))
                 {
                     if (incident.ImageUrl.StartsWith("/"))
-                    {
                         incident.ImageUrl = GATEWAY_URL + incident.ImageUrl;
-                    }
                     else if (!incident.ImageUrl.StartsWith("http"))
-                    {
                         incident.ImageUrl = GATEWAY_URL + "/" + incident.ImageUrl;
-                    }
                 }
             }
+
+            await ShowPendingOnMap();
         }
         else
         {
@@ -114,6 +466,11 @@ else
 
         isLoading = false;
         StateHasChanged();
+    }
+
+    private async Task ShowPendingOnMap()
+    {
+        await JS.InvokeVoidAsync("showPendingOnMap", pendingIncidents);
     }
 
     private async Task Approve(int id)
@@ -148,6 +505,17 @@ else
 
         isProcessing = false;
         StateHasChanged();
+    }
+
+    private string GetTypeName(int typeId)
+    {
+        return typeId switch
+        {
+            1 => "🚗 Saobraćajni problem",
+            2 => "🏗️ Komunalni problem",
+            3 => "⚠️ Javni red i mir",
+            _ => "Nepoznato"
+        };
     }
 
     public class PendingIncident

@@ -15,7 +15,8 @@
             .bindPopup(`Odabrana lokacija<br>Lat: ${e.latlng.lat.toFixed(6)}<br>Lng: ${e.latlng.lng.toFixed(6)}`)
             .openPopup();
 
-        dotNetHelper.invokeMethodAsync('UpdateLocation', e.latlng.lat, e.latlng.lng);
+        // ✅ Poziva SetLocation metodu koja će popuniti textboxove
+        dotNetHelper.invokeMethodAsync('SetLocation', e.latlng.lat, e.latlng.lng);
     });
 
     const locateControl = L.control({ position: 'topleft' });
@@ -41,7 +42,8 @@
                 marker = L.marker([lat, lng]).addTo(map)
                     .bindPopup('Vaša trenutna lokacija')
                     .openPopup();
-                dotNetHelper.invokeMethodAsync('UpdateLocation', lat, lng);
+                // ✅ Poziva SetLocation i kada koristite geolokaciju
+                dotNetHelper.invokeMethodAsync('SetLocation', lat, lng);
             }, () => {
                 alert('Geolokacija nije dozvoljena ili nije dostupna.');
             });
@@ -116,5 +118,63 @@ window.showApprovedOnMap = (incidents) => {
     if (markers.length > 0) {
         const group = new L.featureGroup(markers);
         map.fitBounds(group.getBounds().pad(0.1));
+    }
+};
+
+window.initPendingMap = () => {
+    if (window.pendingMap) {
+        window.pendingMap.remove();
+    }
+
+    const map = L.map('pending-map').setView([44.7722, 17.1911], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    window.pendingMap = map;
+};
+
+window.showPendingOnMap = (incidents) => {
+    if (!window.pendingMap) {
+        window.initPendingMap();
+    }
+
+    const map = window.pendingMap;
+
+    map.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+        }
+    });
+
+    if (incidents.length === 0) return;
+
+    const markers = [];
+    incidents.forEach(inc => {
+        const imgTag = inc.imageUrl
+            ? `<img src="${inc.imageUrl}" alt="Slika" style="max-width:180px; height:auto; border-radius:6px; margin-top:8px;" onerror="this.src='https://via.placeholder.com/180x120?text=Nema+slike';" />`
+            : '<p style="color:#95a5a6; font-style:italic;">Nema slike</p>';
+
+        const popup = `
+            <div style="max-width:260px;">
+                <h6>Incident ID: ${inc.id}</h6>
+                <p><strong>Opis:</strong> ${inc.description || 'Bez opisa'}</p>
+                <p><strong>Vrsta:</strong> ${inc.typeId}</p>
+                <p><strong>Datum:</strong> ${new Date(inc.createdAt).toLocaleString('sr-RS')}</p>
+                ${imgTag}
+            </div>
+        `;
+
+        const marker = L.marker([inc.latitude, inc.longitude])
+            .addTo(map)
+            .bindPopup(popup, { maxWidth: 280 });
+
+        markers.push(marker);
+    });
+
+    if (markers.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.2));
     }
 };
