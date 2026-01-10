@@ -40,7 +40,6 @@ if (app.Environment.IsDevelopment())
 var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "incidents");
 Directory.CreateDirectory(imagesPath);
 
-// Serve static files from wwwroot directory
 app.UseStaticFiles();
 app.UseAuthorization();
 app.MapControllers();

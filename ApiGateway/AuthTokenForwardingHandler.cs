@@ -17,8 +17,7 @@
 
             if (!string.IsNullOrEmpty(authHeader))
             {
-                // Dodaj header tačno onako kako je stigao
-                request.Headers.Remove("Authorization"); // Ukloni postojeći ako postoji
+                request.Headers.Remove("Authorization"); 
                 request.Headers.TryAddWithoutValidation("Authorization", authHeader);
 
                 Console.WriteLine($"🔑 Forwarding Authorization header: {authHeader.Substring(0, Math.Min(50, authHeader.Length))}...");

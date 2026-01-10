@@ -40,9 +40,7 @@
 @code {
     private async Task Logout()
     {
-        // Obriši token iz LocalStorage
         await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
-        // Preusmjeri na početnu (force reload da se stanje osvježi)
         Navigation.NavigateTo("/", true);
     }
 }

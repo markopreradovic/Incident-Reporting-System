@@ -6,7 +6,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpContextAccessor(); // ✅ DODAJ OVO
+builder.Services.AddHttpContextAccessor(); 
 
 builder.Services.AddCors(options =>
 {
@@ -17,7 +17,7 @@ builder.Services.AddCors(options =>
                 "https://localhost:7274",    // Razvojni HTTPS
                 "http://localhost:7274",     // Razvojni HTTP
                 "http://localhost:5000",     // API Gateway
-                "http://localhost:5048",     // Blazor port (proverite koji je)
+                "http://localhost:5048",     // Blazor port 
                 "http://localhost:6001",     // Moderation service
                 "http://localhost:7000"      // User service
             )
@@ -26,7 +26,6 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 
-    // ✅ DODAJTE OVU POLICY ZA SVE ORIGINE (za development)
     options.AddPolicy("AllowAll",
         builder => builder
             .AllowAnyOrigin()
@@ -34,7 +33,6 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader());
 });
 
-// JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer("Bearer", options =>
     {
@@ -48,16 +46,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = "IncidentSystem",
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes("tvoj-super-tajni-kljuc-od-barem-32-karaktera!!")),
-            // Map role claims correctly
             RoleClaimType = System.Security.Claims.ClaimTypes.Role
         };
-
-        // ✅ DODAJTE OVO za WebSocket CORS
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
-                // Proverite da li je WebSocket request
                 if (context.Request.Query.TryGetValue("access_token", out var token))
                 {
                     context.Token = token;
@@ -69,20 +63,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
 
-// Registruj handler
 builder.Services.AddTransient<AuthTokenForwardingHandler>();
 
-// Dodaj Ocelot sa custom handler-om
 builder.Services.AddOcelot(builder.Configuration)
-    .AddDelegatingHandler<AuthTokenForwardingHandler>(true); // global = true
+    .AddDelegatingHandler<AuthTokenForwardingHandler>(true);
 
 var app = builder.Build();
 
-// ✅ PRAVILAN REDOSLED MIDDLEWARE-A
-app.UseCors("AllowAll"); // Ili "AllowBlazor"
+app.UseCors("AllowAll"); 
 
 app.UseAuthentication();
-app.UseAuthorization(); // ✅ DODAJTE OVO!
+app.UseAuthorization(); 
 
 await app.UseOcelot();
 

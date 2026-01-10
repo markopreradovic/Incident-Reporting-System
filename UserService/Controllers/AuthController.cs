@@ -36,10 +36,8 @@ public class AuthController : ControllerBase
         if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
             return Unauthorized("Pogrešno korisničko ime ili lozinka.");
 
-        // Dohvati sve uloge korisnika
         var roles = await _userManager.GetRolesAsync(user);
 
-        // Kreiraj claims
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, user.UserName!),
@@ -47,10 +45,8 @@ public class AuthController : ControllerBase
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        // Dodaj sve uloge kao posebne claim-ove (standardni način)
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-        // Generiši JWT token
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -104,7 +100,6 @@ public class AuthController : ControllerBase
         return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
     }
 
-    // Test endpoint – lista svih korisnika sa ulogama
     [HttpGet("users")]
     public async Task<IActionResult> GetAllUsers()
     {
@@ -141,5 +136,5 @@ public class RegisterModel
     public string Password { get; set; } = "";
     public string Email { get; set; } = "";
     public string FullName { get; set; } = "";
-    public string? Role { get; set; } // "User" ili "Moderator"
+    public string? Role { get; set; } // "User" ili "Moderator" ili "Administrator"
 }

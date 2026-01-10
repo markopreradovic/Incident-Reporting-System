@@ -59,7 +59,6 @@
       "Priority": 11
     },
 
-    // ✅ Ruta za serviranje slika - viši prioritet!
     {
       "DownstreamPathTemplate": "/images/incidents/{fileName}",
       "DownstreamScheme": "http",

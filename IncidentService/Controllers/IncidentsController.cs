@@ -52,16 +52,16 @@ public class IncidentsController : ControllerBase
         return incident;
     }
     [HttpGet("approved")]
-    public async Task<ActionResult<List<Incident>>> GetApproved(
-        [FromQuery] string timeFilter = null,
-        [FromQuery] int? typeId = null)
+    public async Task<ActionResult<List<IncidentDto>>> GetApproved(
+    [FromQuery] string timeFilter = null,
+    [FromQuery] int? typeId = null)
     {
         var query = _db.Incidents.Where(i => i.Status == IncidentStatus.Approved);
 
         if (typeId.HasValue)
             query = query.Where(i => i.TypeId == typeId.Value);
 
-        if (timeFilter != null)
+        if (!string.IsNullOrEmpty(timeFilter))
         {
             var now = DateTime.UtcNow;
             query = timeFilter switch
@@ -73,20 +73,28 @@ public class IncidentsController : ControllerBase
             };
         }
 
+        var GATEWAY_URL = "http://localhost:5000"; // API gateway
+
         var incidents = await query
-             .Select(i => new {
-                 i.Id,
-                 i.Latitude,
-                 i.Longitude,
-                 i.TypeId,
-                 i.Description,
-                 i.ImageUrl,  // ✅ Relativni URL ostaje relativni
-                 i.CreatedAt
-             })
-             .ToListAsync();
+            .Select(i => new IncidentDto
+            {
+                Id = i.Id,
+                Latitude = i.Latitude,
+                Longitude = i.Longitude,
+                TypeId = i.TypeId,
+                Description = i.Description,
+                ImageUrl = string.IsNullOrEmpty(i.ImageUrl)
+                            ? null
+                            : i.ImageUrl.StartsWith("/")
+                                ? GATEWAY_URL + i.ImageUrl
+                                : i.ImageUrl,
+                CreatedAt = i.CreatedAt
+            })
+            .ToListAsync();
 
         return Ok(incidents);
     }
+
 
     [HttpPost("upload-image")]
     public async Task<ActionResult<string>> UploadImage(IFormFile file)

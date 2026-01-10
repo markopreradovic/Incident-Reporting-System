@@ -44,11 +44,9 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
             var claimType = kvp.Key;
             var value = kvp.Value;
 
-            // Skip standard JWT claims that are not needed for authorization
             if (claimType == "exp" || claimType == "iat" || claimType == "nbf" || claimType == "jti")
                 continue;
 
-            // Map standard JWT claim names to ClaimTypes
             if (claimType == "name")
                 claimType = ClaimTypes.Name;
             else if (claimType == "nameid")
@@ -57,7 +55,6 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
                      claimType == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
             {
                 claimType = ClaimTypes.Role;
-                // Handle role as array or single value
                 if (value.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var role in value.EnumerateArray())
@@ -77,7 +74,6 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
             else if (claimType == "http://schemas.microsoft.com/ws/2008/06/identity/claims/nameidentifier")
                 claimType = ClaimTypes.NameIdentifier;
 
-            // Handle other claim types
             if (value.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in value.EnumerateArray())

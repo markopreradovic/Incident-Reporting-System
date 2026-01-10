@@ -16,13 +16,10 @@ public class JwtAuthorizationMessageHandler : DelegatingHandler
 
         if (!string.IsNullOrEmpty(token))
         {
-            // VAŽNO: Token treba biti u formatu "Bearer <token>"
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // Debug log
             await _js.InvokeVoidAsync("console.log", "Token present:", !string.IsNullOrEmpty(token));
 
-            // Parse token payload za debugging (opcionalno)
             try
             {
                 var payload = token.Split('.')[1];

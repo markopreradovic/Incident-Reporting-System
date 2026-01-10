@@ -73,20 +73,16 @@
     {
         var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
 
-        // Sačuvaj token
         await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result!.Token);
 
-        // Obavijesti JwtAuthenticationStateProvider da se stanje promijenilo
         ((JwtAuthenticationStateProvider)AuthProvider).NotifyUserChanged();
 
-        // Dobij trenutni AuthenticationState
         var authState = await AuthProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
         message = $"Dobrodošao, {user.Identity?.Name ?? model.Username}!";
         isSuccess = true;
 
-        // Provjeri da li korisnik ima ulogu Moderator
         if (user.IsInRole("Moderator"))
         {
             Navigation.NavigateTo("/moderation", true);

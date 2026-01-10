@@ -27,7 +27,6 @@ else
                 <div class="card-body">
                     <h5 class="card-title">Incident ID: @incident.Id</h5>
 
-                    <!-- Prikaz slike ako postoji -->
                     @if (!string.IsNullOrEmpty(incident.ImageUrl))
                     {
                         <img src="@incident.ImageUrl" alt="Slika incidenta" style="max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px;" />
@@ -64,7 +63,6 @@ else
 }
 
 @code {
-    // ✅ DODAJTE gateway URL
     private const string GATEWAY_URL = "http://localhost:5000";
 
     private HttpClient _http = default!;
@@ -92,14 +90,12 @@ else
         {
             pendingIncidents = await response.Content.ReadFromJsonAsync<List<PendingIncident>>() ?? new();
 
-            // ✅ APSOLUTNI URL preko API gateway-a
             const string GATEWAY_URL = "http://localhost:5000";
 
             foreach (var incident in pendingIncidents)
             {
                 if (!string.IsNullOrEmpty(incident.ImageUrl))
                 {
-                    // Ako je relativna putanja
                     if (incident.ImageUrl.StartsWith("/"))
                     {
                         incident.ImageUrl = GATEWAY_URL + incident.ImageUrl;
