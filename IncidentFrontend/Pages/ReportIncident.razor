@@ -572,12 +572,10 @@
         {
             approvedIncidents = await response.Content.ReadFromJsonAsync<List<Incident>>() ?? new();
 
-            // ✅ POPRAVKA: Koristite APSOLUTNE URL-ove preko API gateway-a
             foreach (var incident in approvedIncidents)
             {
                 if (!string.IsNullOrEmpty(incident.ImageUrl))
                 {
-                    // Ako je relativna putanja
                     if (incident.ImageUrl.StartsWith("/"))
                     {
                         incident.ImageUrl = GATEWAY_URL + incident.ImageUrl;
@@ -589,8 +587,6 @@
                 }
             }
 
-            // ✅ KORISTITE DRUGU FUNKCIJU
-            // Umesto showApprovedOnMap iz approvedMap.js, koristite onu iz map.js
             await JS.InvokeVoidAsync("showApprovedOnMap", approvedIncidents);
         }
     }
