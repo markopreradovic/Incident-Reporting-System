@@ -12,60 +12,117 @@ services:
     ports:
       - "5433:5432"
     restart: unless-stopped
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+  consul:
+    image: hashicorp/consul:latest
+    container_name: consul
+    command: agent -server -ui -node=consul -bootstrap-expect=1 -client=0.0.0.0
+    ports:
+      - "8500:8500"     # Consul UI i HTTP API
+      - "8600:8600/udp" # DNS
+    volumes:
+      - consul-data:/consul
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500/v1/status/leader"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
   incident-service:
     container_name: incident-service
     build:
       context: ./IncidentService
       dockerfile: Dockerfile
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=incidentdb;Username=postgres;Password=postgres
+      CONSUL_HTTP_ADDR: consul:8500
+      SERVICE_NAME: incident-service
+      SERVICE_PORT: 80
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
     volumes:
-      - incident_images:/app/wwwroot/images/incidents  # ✅
-
+      - incident_images:/app/wwwroot/images/incidents
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+  moderation-service:
+    container_name: moderation-service
+    build:
+      context: ./ModerationService
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      CONSUL_HTTP_ADDR: consul:8500
+      SERVICE_NAME: moderation-service
+      SERVICE_PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+    volumes:
+      - incident_images:/app/wwwroot/images/incidents
+    ports:
+      - "6001:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+  user-service:
+    container_name: user-service
+    build:
+      context: ./UserService
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      CONSUL_HTTP_ADDR: consul:8500
+      SERVICE_NAME: user-service
+      SERVICE_PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+    ports:
+      - "7000:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
   api-gateway:
     container_name: api-gateway
     build:
       context: ./ApiGateway
       dockerfile: Dockerfile
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Development
+      CONSUL_HTTP_ADDR: consul:8500
     ports:
       - "5000:80"
     depends_on:
       - incident-service
-      - moderation-service  # ✅ Dodajte i ovu zavisnost
-
-  moderation-service:
-    build:
-      context: ./ModerationService
-      dockerfile: Dockerfile
-    container_name: moderation-service
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-    ports:
-      - "6001:8080"
-    depends_on:
-      - postgres
-    restart: unless-stopped
-    volumes:
-      - incident_images:/app/wwwroot/images/incidents  
-    
-  user-service:
-    build:
-      context: ./UserService
-      dockerfile: Dockerfile
-    container_name: user-service
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-    depends_on:
-      - postgres
-    ports:
-      - "7000:8080"
-
+      - moderation-service
+      - user-service
+      - consul
+      
 volumes:
   postgres_data:
   incident_images:
+  consul-data:

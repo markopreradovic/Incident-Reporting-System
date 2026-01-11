@@ -1,3 +1,4 @@
+﻿using Consul;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -8,83 +9,52 @@ using UserService.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+// DB Context
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql("Host=postgres;Port=5432;Database=incidentdb;Username=postgres;Password=postgres"));
 
-builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
-{
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
-})
-.AddEntityFrameworkStores<AppDbContext>()
-.AddDefaultTokenProviders();
+// Identity
+builder.Services.AddIdentity<AppUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
 
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// JWT
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = "IncidentSystem",
-        ValidAudience = "IncidentSystem",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("tvoj-super-tajni-kljuc-od-barem-32-karaktera!!"))
-    };
-});
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "IncidentSystem",
+            ValidAudience = "IncidentSystem",
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes("tvoj-super-tajni-kljuc-od-barem-32-karaktera!!"))
+        };
+    });
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
+builder.Services.AddCors(policy => policy.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 var app = builder.Build();
 
+// Migrate + seed roles
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-
         context.Database.Migrate();
-        Console.WriteLine("Migracije uspje�no primijenjene za UserService.");
-
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
-        string[] roles = { "Admin", "Moderator", "User" };
-        foreach (var role in roles)
-        {
-            if (!await roleManager.RoleExistsAsync(role))
-            {
-                await roleManager.CreateAsync(new IdentityRole(role));
-                Console.WriteLine($"Rola '{role}' kreirana.");
-            }
-        }
+        foreach (var role in new[] { "Admin", "Moderator", "User" })
+            if (!await roleManager.RoleExistsAsync(role)) await roleManager.CreateAsync(new IdentityRole(role));
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Gre�ka: {ex.Message}");
-    }
+    catch (Exception ex) { Console.WriteLine(ex.Message); }
 }
 
 if (app.Environment.IsDevelopment())
@@ -96,6 +66,45 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Health endpoint
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "user-service" }));
+
 app.MapControllers();
+
+// Consul registration
+var consulClient = new ConsulClient(c => c.Address = new Uri("http://consul:8500"));
+var serviceName = "user-service";
+var servicePort = 8080;
+
+var registration = new AgentServiceRegistration
+{
+    ID = $"{serviceName}-{Guid.NewGuid()}",
+    Name = serviceName,
+    Address = serviceName,
+    Port = servicePort,
+    Check = new AgentServiceCheck
+    {
+        HTTP = $"http://{serviceName}:{servicePort}/health",
+        Interval = TimeSpan.FromSeconds(10),
+        Timeout = TimeSpan.FromSeconds(5),
+        DeregisterCriticalServiceAfter = TimeSpan.FromMinutes(1)
+    }
+};
+
+await consulClient.Agent.ServiceRegister(registration);
+Console.WriteLine($"✅ Registered service: {serviceName} at {serviceName}:{servicePort} with ID: {registration.ID}");
+
+app.Lifetime.ApplicationStopping.Register(async () =>
+{
+    try
+    {
+        await consulClient.Agent.ServiceDeregister(registration.ID);
+        Console.WriteLine($"✅ Deregistered service on shutdown: {registration.ID}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Failed to deregister: {ex.Message}");
+    }
+});
 
 app.Run();
