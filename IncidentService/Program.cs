@@ -6,12 +6,10 @@ using Steeltoe.Configuration.ConfigServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB Context
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Host=postgres;Port=5432;Database=incidentdb;Username=postgres;Password=postgres"));
 
-// Controllers + Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -20,7 +18,6 @@ builder.Configuration.AddConfigServer();
 
 var app = builder.Build();
 
-// Apply migrations
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -35,26 +32,21 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Swagger dev
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Static files
-// 1. Kreiraj direktorij ako ne postoji
 var imagesPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "images", "incidents");
 Directory.CreateDirectory(imagesPath);
 
-// 2. Omogući static files iz wwwroot (default putanja)
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(imagesPath),
-    RequestPath = "/images/incidents"  // ← OVO je ključno – mapira /images/incidents na taj folder
+    RequestPath = "/images/incidents"  
 });
 
-// 3. Opcionalno: omogući directory browsing (za debug)
 app.UseDirectoryBrowser(new DirectoryBrowserOptions
 {
     FileProvider = new PhysicalFileProvider(imagesPath),
@@ -62,12 +54,10 @@ app.UseDirectoryBrowser(new DirectoryBrowserOptions
 });
 app.UseAuthorization();
 
-// Health endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "incident-service" }));
 
 app.MapControllers();
 
-// Consul registration
 var consulClient = new ConsulClient(c => c.Address = new Uri("http://consul:8500"));
 var serviceName = "incident-service";
 var servicePort = 80;

@@ -48,7 +48,6 @@ builder.Services.AddCors(policy =>
 
 var app = builder.Build();
 
-// Migrate + seed roles
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -81,7 +80,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ⭐ HEALTH ENDPOINT - MORA BITI PRE app.Run()
 app.MapGet("/health", () => Results.Ok(new
 {
     status = "Healthy",
@@ -91,7 +89,6 @@ app.MapGet("/health", () => Results.Ok(new
 
 app.MapControllers();
 
-// ⭐ CONSUL REGISTRACIJA - MORA BITI PRE app.Run()
 var consulClient = new ConsulClient(c => c.Address = new Uri("http://consul:8500"));
 var serviceName = "user-service";
 var servicePort = 8080;
@@ -114,7 +111,6 @@ var registration = new AgentServiceRegistration
 await consulClient.Agent.ServiceRegister(registration);
 Console.WriteLine($"✅ Registered service: {serviceName} at {serviceName}:{servicePort} with ID: {registration.ID}");
 
-// Deregistracija na shutdown
 app.Lifetime.ApplicationStopping.Register(async () =>
 {
     try

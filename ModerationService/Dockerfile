@@ -9,7 +9,6 @@ RUN dotnet publish "ModerationService.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# ✅ Install curl for health checks - OVO MORA BITI OVDJE!
 RUN apt-get update && \
     apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/*
@@ -17,7 +16,6 @@ RUN apt-get update && \
 EXPOSE 8080
 COPY --from=build /app/publish .
 
-# ✅ Create the correct images directory path (matching Program.cs)
 RUN mkdir -p /app/images/incidents && \
     chmod -R 777 /app/images
 

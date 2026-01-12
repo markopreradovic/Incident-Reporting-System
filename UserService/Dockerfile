@@ -1,5 +1,4 @@
-﻿# Stage 1: Build
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 COPY UserService.csproj ./
@@ -8,7 +7,6 @@ RUN dotnet restore UserService.csproj
 COPY . ./
 RUN dotnet publish UserService.csproj -c Release -o /app/publish
 
-# Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim AS final
 WORKDIR /app
 
