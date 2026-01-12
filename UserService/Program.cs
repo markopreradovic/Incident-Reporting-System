@@ -3,11 +3,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Steeltoe.Configuration.ConfigServer;
 using System.Text;
 using UserService.Data;
 using UserService.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Config Server
+builder.Configuration.AddConfigServer();
 
 // DB Context
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -38,7 +42,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddCors(policy => policy.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+builder.Services.AddCors(policy =>
+    policy.AddPolicy("AllowAll", p =>
+        p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 var app = builder.Build();
 
@@ -50,11 +56,18 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
         context.Database.Migrate();
+
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         foreach (var role in new[] { "Admin", "Moderator", "User" })
-            if (!await roleManager.RoleExistsAsync(role)) await roleManager.CreateAsync(new IdentityRole(role));
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+        }
     }
-    catch (Exception ex) { Console.WriteLine(ex.Message); }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Migration/Seed error: {ex.Message}");
+    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -63,15 +76,22 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowAll");
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Health endpoint
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "user-service" }));
+// ⭐ HEALTH ENDPOINT - MORA BITI PRE app.Run()
+app.MapGet("/health", () => Results.Ok(new
+{
+    status = "Healthy",
+    service = "user-service",
+    timestamp = DateTime.UtcNow
+}));
 
 app.MapControllers();
 
-// Consul registration
+// ⭐ CONSUL REGISTRACIJA - MORA BITI PRE app.Run()
 var consulClient = new ConsulClient(c => c.Address = new Uri("http://consul:8500"));
 var serviceName = "user-service";
 var servicePort = 8080;
@@ -94,6 +114,7 @@ var registration = new AgentServiceRegistration
 await consulClient.Agent.ServiceRegister(registration);
 Console.WriteLine($"✅ Registered service: {serviceName} at {serviceName}:{servicePort} with ID: {registration.ID}");
 
+// Deregistracija na shutdown
 app.Lifetime.ApplicationStopping.Register(async () =>
 {
     try

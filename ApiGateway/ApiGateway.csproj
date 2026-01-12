@@ -12,6 +12,11 @@
 		<PackageReference Include="Ocelot.Provider.Polly" Version="23.3.3" />
 
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+
+		<PackageReference Include="Steeltoe.Common.Hosting" Version="4.0.0" />
+		<PackageReference Include="Steeltoe.Configuration.ConfigServer" Version="4.0.0" />
+		<PackageReference Include="Steeltoe.Configuration.CloudFoundry" Version="4.0.0" />
+
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0" />
 		<PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.0.0" />
 	</ItemGroup>

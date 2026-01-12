@@ -1,7 +1,8 @@
-﻿using IncidentService.Data;
+﻿using Consul;
+using IncidentService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
-using Consul;
+using Steeltoe.Configuration.ConfigServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Configuration.AddConfigServer();
 
 var app = builder.Build();
 
@@ -40,9 +43,23 @@ if (app.Environment.IsDevelopment())
 }
 
 // Static files
-var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "incidents");
+// 1. Kreiraj direktorij ako ne postoji
+var imagesPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "images", "incidents");
 Directory.CreateDirectory(imagesPath);
-app.UseStaticFiles();
+
+// 2. Omogući static files iz wwwroot (default putanja)
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(imagesPath),
+    RequestPath = "/images/incidents"  // ← OVO je ključno – mapira /images/incidents na taj folder
+});
+
+// 3. Opcionalno: omogući directory browsing (za debug)
+app.UseDirectoryBrowser(new DirectoryBrowserOptions
+{
+    FileProvider = new PhysicalFileProvider(imagesPath),
+    RequestPath = "/images/incidents"
+});
 app.UseAuthorization();
 
 // Health endpoint

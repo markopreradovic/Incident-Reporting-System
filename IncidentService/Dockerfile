@@ -9,7 +9,7 @@ RUN dotnet restore "IncidentService.csproj"
 # Kopiraj sav kod
 COPY . ./
 
-# Publish - koristi -o /app/publish da bude jasnije
+# Publish
 RUN dotnet publish "IncidentService.csproj" \
     -c Release \
     -o /app/publish \
@@ -19,11 +19,17 @@ RUN dotnet publish "IncidentService.csproj" \
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
+# ✅ Install curl for health checks
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
+
 # Kopiraj objavljenu aplikaciju
 COPY --from=build /app/publish .
 
-# ✅ Kreiraj wwwroot direktorijum pre nego što se montira volume
-RUN mkdir -p /app/wwwroot/images/incidents
+# ✅ Kreiraj images direktorijum (matching docker-compose volume)
+RUN mkdir -p /app/images/incidents && \
+    chmod -R 777 /app/images
 
 ENV ASPNETCORE_URLS=http://+:80
 EXPOSE 80

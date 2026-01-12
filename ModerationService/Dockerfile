@@ -1,19 +1,24 @@
 ﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 COPY ["ModerationService.csproj", "./"]
 RUN dotnet restore "ModerationService.csproj"
-
 COPY . .
 RUN dotnet publish "ModerationService.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-EXPOSE 80
 
+# ✅ Install curl for health checks - OVO MORA BITI OVDJE!
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
+
+EXPOSE 8080
 COPY --from=build /app/publish .
 
-# ✅ Kreiraj wwwroot direktorijum pre nego što se montira volume
-RUN mkdir -p /app/wwwroot/images/incidents
+# ✅ Create the correct images directory path (matching Program.cs)
+RUN mkdir -p /app/images/incidents && \
+    chmod -R 777 /app/images
 
 ENTRYPOINT ["dotnet", "ModerationService.dll"]

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IncidentFrontend", "Inciden
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserService", "UserService\UserService.csproj", "{B0641AD0-81DF-4298-9631-A89BB2CE228D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConfigServer", "ConfigServer\ConfigServer.csproj", "{3BBD4B3E-C632-417D-AE91-34067185DCE3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{B0641AD0-81DF-4298-9631-A89BB2CE228D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0641AD0-81DF-4298-9631-A89BB2CE228D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0641AD0-81DF-4298-9631-A89BB2CE228D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3BBD4B3E-C632-417D-AE91-34067185DCE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BBD4B3E-C632-417D-AE91-34067185DCE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BBD4B3E-C632-417D-AE91-34067185DCE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BBD4B3E-C632-417D-AE91-34067185DCE3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

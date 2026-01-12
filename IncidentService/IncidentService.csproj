@@ -20,6 +20,10 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+		<PackageReference Include="Steeltoe.Common.Hosting" Version="4.0.0" />
+		<PackageReference Include="Steeltoe.Configuration.ConfigServer" Version="4.0.0" />
+		<PackageReference Include="Steeltoe.Configuration.CloudFoundry" Version="4.0.0" />
+
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 	</ItemGroup>
 
