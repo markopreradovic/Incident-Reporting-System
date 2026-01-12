@@ -5,55 +5,242 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthProvider
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header text-center">
-                    <h3>Prijava u sistem</h3>
+<div class="dark-container">
+    <div class="login-wrapper">
+        <div class="header-section">
+            <h3 class="page-title">
+                Prijava u sistem
+            </h3>
+        </div>
+
+        <div class="form-container">
+            <EditForm Model="@model" OnValidSubmit="@HandleLogin">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Korisničko ime
+                    </label>
+                    <InputText @bind-Value="model.Username" class="form-input" placeholder="npr. moderator" />
                 </div>
-                <div class="card-body">
-                    <EditForm Model="@model" OnValidSubmit="@HandleLogin">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary />
 
-                        <div class="mb-3">
-                            <label class="form-label">Korisničko ime</label>
-                            <InputText @bind-Value="model.Username" class="form-control" placeholder="npr. moderator" />
-                        </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        Lozinka
+                    </label>
+                    <InputText @bind-Value="model.Password" type="password" class="form-input" placeholder="npr. moderator123" />
+                </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Lozinka</label>
-                            <InputText @bind-Value="model.Password" type="password" class="form-control" placeholder="npr. moderator123" />
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg" disabled="@isLoading">
-                                @if (isLoading)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status">Prijava u toku;</span>
-                                    
-                                }
-                                else
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status">Prijavi se</span>
-
-                                }
-                            </button>
-                        </div>
-                    </EditForm>
-
-                    @if (!string.IsNullOrEmpty(message))
+                <button type="submit" class="submit-button" disabled="@isLoading">
+                    @if (isLoading)
                     {
-                        <div class="alert @(isSuccess ? "alert-success" : "alert-danger") mt-3">
-                            @message
-                        </div>
+                        <span>Prijava u toku...</span>
                     }
+                    else
+                    {
+                        <span>Prijavi se</span>
+                    }
+                </button>
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <div class="@(isSuccess ? "alert-success" : "alert-danger")">
+                    <span class="alert-icon">@(isSuccess ? "✓" : "✗")</span>
+                    @message
                 </div>
-            </div>
+            }
         </div>
     </div>
 </div>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap');
+
+    * {
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .dark-container {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        color: #e0e0e0;
+    }
+
+    .login-wrapper {
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .header-section {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .icon {
+        font-size: 2.5rem;
+    }
+
+    .form-container {
+        background: rgba(30, 30, 50, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #b8c5d6;
+        font-size: 0.95rem;
+    }
+
+    .label-icon {
+        font-size: 1.1rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        background: rgba(20, 20, 35, 0.9);
+        border: 2px solid #2d3561;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+            background: rgba(20, 20, 35, 1);
+        }
+
+    .submit-button {
+        width: 100%;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+        .submit-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
+        }
+
+        .submit-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+    .button-icon {
+        font-size: 1.3rem;
+    }
+
+    .alert-success {
+        margin-top: 1.5rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 8px;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        animation: slideIn 0.3s ease;
+    }
+
+    .alert-danger {
+        margin-top: 1.5rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-radius: 8px;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        animation: slideIn 0.3s ease;
+    }
+
+    .alert-icon {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .dark-container {
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .form-container {
+            padding: 1.5rem;
+        }
+
+        .login-wrapper {
+            max-width: 100%;
+        }
+    }
+</style>
 
 @code {
     private LoginModel model = new();
@@ -62,44 +249,44 @@
     private bool isLoading = false;
 
     private async Task HandleLogin()
-{
-    isLoading = true;
-    message = "";
-    StateHasChanged();
-
-    var response = await Http.PostAsJsonAsync("http://localhost:5000/api/auth/login", model);
-
-    if (response.IsSuccessStatusCode)
     {
-        var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
+        isLoading = true;
+        message = "";
+        StateHasChanged();
 
-        await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result!.Token);
+        var response = await Http.PostAsJsonAsync("http://localhost:5000/api/auth/login", model);
 
-        ((JwtAuthenticationStateProvider)AuthProvider).NotifyUserChanged();
-
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        message = $"Dobrodošao, {user.Identity?.Name ?? model.Username}!";
-        isSuccess = true;
-
-        if (user.IsInRole("Moderator"))
+        if (response.IsSuccessStatusCode)
         {
-            Navigation.NavigateTo("/moderation", true);
+            var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
+
+            await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result!.Token);
+
+            ((JwtAuthenticationStateProvider)AuthProvider).NotifyUserChanged();
+
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            message = $"Dobrodošao, {user.Identity?.Name ?? model.Username}!";
+            isSuccess = true;
+
+            if (user.IsInRole("Moderator"))
+            {
+                Navigation.NavigateTo("/moderation", true);
+            }
+            else
+            {
+                Navigation.NavigateTo("/", true);
+            }
         }
         else
         {
-            Navigation.NavigateTo("/", true);
+            message = "Pogrešno korisničko ime ili lozinka.";
+            isSuccess = false;
+            isLoading = false;
+            StateHasChanged();
         }
     }
-    else
-    {
-        message = "Pogrešno korisničko ime ili lozinka.";
-        isSuccess = false;
-        isLoading = false;
-        StateHasChanged();
-    }
-}
 
     public class LoginModel
     {

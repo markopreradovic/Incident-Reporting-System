@@ -7,10 +7,14 @@
 
 <div class="dark-container">
     <div class="header-section">
-        <h3 class="page-title">
-            <span class="icon">📍</span>
-            Prijava incidenta
-        </h3>
+        <div class="header-content">
+            <h3 class="page-title">
+                Prijava incidenta
+            </h3>
+            <button class="logout-button" @onclick="Logout">
+                <span>Odjavi se</span>
+            </button>
+        </div>
     </div>
 
     <div id="map" class="map-container"></div>
@@ -19,7 +23,6 @@
         <div class="form-grid">
             <div class="form-group">
                 <label class="form-label">
-                    <span class="label-icon">🌐</span>
                     Latitude
                 </label>
                 <input class="form-input" @bind="model.Latitude" type="number" step="0.000001" placeholder="44.772182" />
@@ -27,7 +30,6 @@
 
             <div class="form-group">
                 <label class="form-label">
-                    <span class="label-icon">🌐</span>
                     Longitude
                 </label>
                 <input class="form-input" @bind="model.Longitude" type="number" step="0.000001" placeholder="17.191000" />
@@ -36,32 +38,29 @@
 
         <div class="form-group">
             <label class="form-label">
-                <span class="label-icon">🏷️</span>
                 Vrsta incidenta
             </label>
             <select class="form-select" @bind="model.TypeId">
-                <option value="1">🚗 Saobraćajni problem</option>
-                <option value="2">🏗️ Komunalni problem</option>
-                <option value="3">⚠️ Javni red i mir</option>
+                <option value="1">Saobraćajni problem</option>
+                <option value="2">Komunalni problem</option>
+                <option value="3">Javni red i mir</option>
             </select>
         </div>
 
         <div class="form-group">
             <label class="form-label">
-                <span class="label-icon">📋</span>
                 Podvrsta
             </label>
             <select class="form-select" @bind="model.SubTypeId">
-                <option value="1">🕳️ Rupa na kolovozu</option>
-                <option value="2">🚦 Neispravna semaforska signalizacija</option>
-                <option value="3">🗑️ Divlje deponije</option>
-                <option value="4">💡 Neispravno javno osvjetljenje</option>
+                <option value="1">Rupa na kolovozu</option>
+                <option value="2">Neispravna semaforska signalizacija</option>
+                <option value="3">Divlje deponije</option>
+                <option value="4">Neispravno javno osvjetljenje</option>
             </select>
         </div>
 
         <div class="form-group">
             <label class="form-label">
-                <span class="label-icon">✍️</span>
                 Opis incidenta
             </label>
             <textarea class="form-textarea" @bind="model.Description" rows="4" placeholder="Detaljno opišite incident..."></textarea>
@@ -69,13 +68,11 @@
 
         <div class="form-group">
             <label class="form-label">
-                <span class="label-icon">📷</span>
                 Slika incidenta (opcionalno, max 5MB)
             </label>
             <div class="file-input-wrapper">
                 <InputFile OnChange="@OnFileSelected" class="file-input" accept="image/*" />
                 <div class="file-input-display">
-                    <span class="upload-icon">⬆️</span>
                     <span>Kliknite ili prevucite sliku</span>
                 </div>
             </div>
@@ -92,12 +89,10 @@
         <button class="submit-button" @onclick="Submit" disabled="@isSubmitting">
             @if (isSubmitting)
             {
-                <span class="button-icon">⏳</span>
                 <span>Prijava u toku...</span>
             }
             else
             {
-                <span class="button-icon">✅</span>
                 <span>Prijavi incident</span>
             }
         </button>
@@ -113,7 +108,6 @@
 
     <div class="header-section" style="margin-top: 3rem;">
         <h3 class="page-title">
-            <span class="icon">✅</span>
             Odobreni incidenti
         </h3>
     </div>
@@ -122,33 +116,30 @@
         <div class="form-grid">
             <div class="form-group">
                 <label class="form-label">
-                    <span class="label-icon">⏰</span>
                     Filter po vremenu
                 </label>
                 <select class="form-select" @bind="filter.TimeFilter">
                     <option value="">Sve</option>
-                    <option value="24h">⏱️ Zadnjih 24h</option>
-                    <option value="7d">📅 Zadnjih 7 dana</option>
-                    <option value="31d">📆 Zadnjih 31 dan</option>
+                    <option value="24h">Zadnjih 24h</option>
+                    <option value="7d">Zadnjih 7 dana</option>
+                    <option value="31d">Zadnjih 31 dan</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label class="form-label">
-                    <span class="label-icon">🏷️</span>
                     Vrsta incidenta
                 </label>
                 <select class="form-select" @bind="filter.TypeId">
                     <option value="0">Sve</option>
-                    <option value="1">🚗 Saobraćajni problem</option>
-                    <option value="2">🏗️ Komunalni problem</option>
-                    <option value="3">⚠️ Javni red i mir</option>
+                    <option value="1">Saobraćajni problem</option>
+                    <option value="2">Komunalni problem</option>
+                    <option value="3">Javni red i mir</option>
                 </select>
             </div>
         </div>
 
         <button class="submit-button" @onclick="LoadApproved">
-            <span class="button-icon">🔍</span>
             Prikaži incidente
         </button>
     </div>
@@ -176,6 +167,14 @@
         margin-bottom: 2rem;
     }
 
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
     .page-title {
         font-size: 2rem;
         font-weight: 700;
@@ -185,6 +184,32 @@
         align-items: center;
         gap: 0.75rem;
     }
+
+    .logout-button {
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+        .logout-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .logout-button:active {
+            transform: translateY(0);
+        }
 
     .icon {
         font-size: 2.5rem;
@@ -406,8 +431,17 @@
             padding: 1rem;
         }
 
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
         .page-title {
             font-size: 1.5rem;
+        }
+
+        .logout-button {
+            width: 100%;
         }
 
         .map-container {
@@ -465,7 +499,7 @@
             StateHasChanged();
         }
     }
-    //TEST
+
     private async Task Submit()
     {
         isSubmitting = true;
@@ -537,6 +571,12 @@
         StateHasChanged();
     }
 
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        Navigation.NavigateTo("/", true);
+    }
+
     public class ReportModel
     {
         public double Latitude { get; set; }
@@ -604,6 +644,6 @@
         public int TypeId { get; set; }
         public string Description { get; set; } = "";
         public string? ImageUrl { get; set; }
-        public DateTime CreatedAt { get; set; } 
+        public DateTime CreatedAt { get; set; }
     }
 }

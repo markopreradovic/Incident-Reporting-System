@@ -3,15 +3,20 @@
 @attribute [Authorize(Roles = "Moderator")]
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <PageTitle>Moderacija incidenata</PageTitle>
 
 <div class="dark-container">
     <div class="header-section">
-        <h3 class="page-title">
-            <span class="icon">🛡️</span>
-            Moderatorski panel
-        </h3>
+        <div class="header-content">
+            <h3 class="page-title">
+                Moderatorski panel
+            </h3>
+            <button class="logout-button" @onclick="Logout">
+                <span>Odjavi se</span>
+            </button>
+        </div>
     </div>
 
     @if (isLoading)
@@ -24,7 +29,6 @@
     else if (!pendingIncidents.Any())
     {
         <div class="alert-info">
-            <span class="alert-icon">ℹ️</span>
             <span>Nema pending incidenata za moderaciju</span>
         </div>
     }
@@ -41,7 +45,6 @@
                     else
                     {
                         <div class="incident-image-placeholder">
-                            <span class="placeholder-icon">📷</span>
                             <span class="placeholder-text">Nema slike</span>
                         </div>
                     }
@@ -50,22 +53,18 @@
                         <h5 class="incident-title">Incident ID: @incident.Id</h5>
                         <div class="incident-details">
                             <div class="detail-item">
-                                <span class="detail-icon">🌐</span>
                                 <span class="detail-label">Lokacija:</span>
                                 <span class="detail-value">@incident.Latitude.ToString("F6"), @incident.Longitude.ToString("F6")</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-icon">🏷️</span>
                                 <span class="detail-label">Vrsta:</span>
                                 <span class="detail-value">@GetTypeName(incident.TypeId)</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-icon">✍️</span>
                                 <span class="detail-label">Opis:</span>
                                 <span class="detail-value">@incident.Description</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-icon">📅</span>
                                 <span class="detail-label">Datum:</span>
                                 <span class="detail-value">@incident.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
                             </div>
@@ -89,7 +88,6 @@
 
     <div class="header-section" style="margin-top: 3rem;">
         <h3 class="page-title">
-            <span class="icon">🗺️</span>
             Mapa pending incidenata
         </h3>
     </div>
@@ -123,6 +121,14 @@
         margin-bottom: 2rem;
     }
 
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
     .page-title {
         font-size: 2rem;
         font-weight: 700;
@@ -132,6 +138,32 @@
         align-items: center;
         gap: 0.75rem;
     }
+
+    .logout-button {
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+        .logout-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .logout-button:active {
+            transform: translateY(0);
+        }
 
     .icon {
         font-size: 2.5rem;
@@ -392,8 +424,17 @@
             padding: 1rem;
         }
 
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
         .page-title {
             font-size: 1.5rem;
+        }
+
+        .logout-button {
+            width: 100%;
         }
 
         .incidents-grid {
@@ -507,13 +548,19 @@
         StateHasChanged();
     }
 
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        Navigation.NavigateTo("/login", true);
+    }
+
     private string GetTypeName(int typeId)
     {
         return typeId switch
         {
-            1 => "🚗 Saobraćajni problem",
-            2 => "🏗️ Komunalni problem",
-            3 => "⚠️ Javni red i mir",
+            1 => "Saobraćajni problem",
+            2 => "Komunalni problem",
+            3 => "Javni red i mir",
             _ => "Nepoznato"
         };
     }

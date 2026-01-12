@@ -3,39 +3,264 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<div class="container mt-5 text-center">
-    <h1 class="display-4 mb-5">Incident Reporting System</h1>
+<div class="dark-container">
+    <div class="home-wrapper">
+        <div class="header-section">
+            <h1 class="main-title">
+                Incident Reporting System
+            </h1>
+        </div>
 
-    <AuthorizeView>
-        <Authorized>
-            <div class="alert alert-success p-5">
-                <h4>Dobrodošli, <strong>@context.User.Identity?.Name</strong>!</h4>
-                <p class="lead mt-4">Možete prijaviti novi incident ili pregledati odobrene na mapi.</p>
+        <AuthorizeView>
+            <Authorized>
+                <div class="content-card success-card">
+                    <div class="card-header">
+                        <h3>Dobrodošli, <strong>@context.User.Identity?.Name</strong>!</h3>
+                    </div>
 
-                <div class="d-flex justify-content-center gap-3 flex-wrap">
-                    <a href="report" class="btn btn-primary btn-lg">
-                        <span style="font-size: 1.5rem;">📍</span> Prijava incidenta
-                    </a>
+                    <p class="card-description">
+                        Možete prijaviti novi incident ili pregledati odobrene na mapi.
+                    </p>
 
-                    <button class="btn btn-outline-danger btn-lg" @onclick="Logout">
-                        <span style="font-size: 1.5rem;">🚪</span> Odjavi se
-                    </button>
+                    <div class="button-group">
+                        <a href="report" class="action-button primary">
+                            <span>Prijava incidenta</span>
+                        </a>
+                        <button class="action-button secondary" @onclick="Logout">
+                            <span>Odjavi se</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </Authorized>
-        <NotAuthorized>
-            <div class="alert alert-warning p-5">
-                <h4>Morate se prijaviti da biste koristili aplikaciju</h4>
-                <p class="lead mt-4">
-                    Pristup je dozvoljen samo registrovanim korisnicima.
-                </p>
-                <a href="/login" class="btn btn-success btn-lg mt-4">
-                    <span style="font-size: 1.5rem;">🔑</span> Prijavi se
-                </a>
-            </div>
-        </NotAuthorized>
-    </AuthorizeView>
+            </Authorized>
+            <NotAuthorized>
+                <div class="content-card warning-card">
+                    <div class="card-header">
+                        <h3>Morate se prijaviti da biste koristili aplikaciju</h3>
+                    </div>
+
+                    <p class="card-description">
+                        Pristup je dozvoljen samo registrovanim korisnicima.
+                    </p>
+
+                    <div class="button-group">
+                        <a href="/login" class="action-button primary">
+                            <span>Prijavi se</span>
+                        </a>
+                    </div>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
 </div>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap');
+
+    * {
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .dark-container {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        color: #e0e0e0;
+    }
+
+    .home-wrapper {
+        width: 100%;
+        max-width: 700px;
+    }
+
+    .header-section {
+        margin-bottom: 3rem;
+        text-align: center;
+    }
+
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        animation: fadeInDown 0.6s ease;
+    }
+
+    .icon {
+        font-size: 3rem;
+    }
+
+    .content-card {
+        background: rgba(30, 30, 50, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 3rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        animation: fadeInUp 0.6s ease;
+    }
+
+    .success-card {
+        border-top: 4px solid #10b981;
+    }
+
+    .warning-card {
+        border-top: 4px solid #f59e0b;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .header-icon {
+        font-size: 2.5rem;
+    }
+
+    .card-header h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+    }
+
+    .card-header strong {
+        color: #4a9eff;
+    }
+
+    .card-description {
+        font-size: 1.1rem;
+        color: #b8c5d6;
+        text-align: center;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .action-button {
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        font-family: 'Open Sans', sans-serif;
+        min-width: 200px;
+    }
+
+        .action-button.primary {
+            background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
+        }
+
+            .action-button.primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
+            }
+
+        .action-button.secondary {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+            .action-button.secondary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+            }
+
+        .action-button:active {
+            transform: translateY(0);
+        }
+
+    .button-icon {
+        font-size: 1.5rem;
+    }
+
+    @@keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .dark-container {
+            padding: 1rem;
+        }
+
+        .main-title {
+            font-size: 1.75rem;
+        }
+
+        .icon {
+            font-size: 2rem;
+        }
+
+        .content-card {
+            padding: 2rem 1.5rem;
+        }
+
+        .card-header h3 {
+            font-size: 1.25rem;
+        }
+
+        .card-description {
+            font-size: 1rem;
+        }
+
+        .action-button {
+            width: 100%;
+            min-width: unset;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+    }
+</style>
 
 @code {
     private async Task Logout()
