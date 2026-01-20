@@ -19,6 +19,64 @@
         </div>
     </div>
 
+    <!-- ANALYTICS SEKCIJA -->
+    <div class="analytics-section">
+        <h4 class="section-title">Analitika incidenata</h4>
+
+        <div class="stats-grid">
+            <div class="stat-card stat-total">
+                <div class="stat-icon">📝</div>
+                <div class="stat-content">
+                    <div class="stat-label">Ukupno</div>
+                    <div class="stat-value">@totalIncidents</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-pending">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-content">
+                    <div class="stat-label">Čekaju odobrenje</div>
+                    <div class="stat-value">@pendingCount</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-approved">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-label">Odobreno</div>
+                    <div class="stat-value">@approvedCount</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-rejected">
+                <div class="stat-icon">❌</div>
+                <div class="stat-content">
+                    <div class="stat-label">Odbijeno</div>
+                    <div class="stat-value">@rejectedCount</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h5 class="chart-title">Incidenti po vrsti</h5>
+                <canvas id="typeChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h5 class="chart-title">Incidenti po danima (zadnjih 30 dana)</h5>
+                <canvas id="dateChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- PENDING INCIDENTI SEKCIJA -->
+    <div class="header-section" style="margin-top: 3rem;">
+        <h3 class="page-title">
+            🔍 Pending incidenti
+        </h3>
+    </div>
+
     @if (isLoading)
     {
         <div class="loading-container">
@@ -29,7 +87,7 @@
     else if (!pendingIncidents.Any())
     {
         <div class="alert-info">
-            <span>Nema pending incidenata za moderaciju</span>
+            <span>✨ Nema pending incidenata za moderaciju</span>
         </div>
     }
     else
@@ -45,12 +103,13 @@
                     else
                     {
                         <div class="incident-image-placeholder">
+                            <span class="placeholder-icon">🖼️</span>
                             <span class="placeholder-text">Nema slike</span>
                         </div>
                     }
 
                     <div class="incident-body">
-                        <h5 class="incident-title">Incident ID: @incident.Id</h5>
+                        <h5 class="incident-title">Incident #@incident.Id</h5>
                         <div class="incident-details">
                             <div class="detail-item">
                                 <span class="detail-label">Lokacija:</span>
@@ -86,9 +145,10 @@
         </div>
     }
 
+    <!-- MAPA PENDING INCIDENATA -->
     <div class="header-section" style="margin-top: 3rem;">
         <h3 class="page-title">
-            Mapa pending incidenata
+            🗺️ Mapa pending incidenata
         </h3>
     </div>
 
@@ -139,6 +199,13 @@
         gap: 0.75rem;
     }
 
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 1.5rem;
+    }
+
     .logout-button {
         padding: 0.75rem 1.5rem;
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -165,10 +232,98 @@
             transform: translateY(0);
         }
 
-    .icon {
-        font-size: 2.5rem;
+    /* ANALYTICS STYLES */
+    .analytics-section {
+        margin-bottom: 3rem;
     }
 
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(30, 30, 50, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+    .stat-icon {
+        font-size: 3rem;
+        flex-shrink: 0;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #b8c5d6;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        line-height: 1;
+    }
+
+    .stat-total {
+        border-left: 4px solid #3b82f6;
+    }
+
+    .stat-pending {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .stat-approved {
+        border-left: 4px solid #10b981;
+    }
+
+    .stat-rejected {
+        border-left: 4px solid #ef4444;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr; 
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-card {
+        background: rgba(30, 30, 50, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 1rem;
+    }
+
+    /* EXISTING STYLES */
     .loading-container {
         display: flex;
         flex-direction: column;
@@ -289,11 +444,6 @@
         align-items: flex-start;
         gap: 0.5rem;
         font-size: 0.95rem;
-    }
-
-    .detail-icon {
-        font-size: 1.1rem;
-        flex-shrink: 0;
     }
 
     .detail-label {
@@ -437,6 +587,14 @@
             width: 100%;
         }
 
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
         .incidents-grid {
             grid-template-columns: 1fr;
         }
@@ -454,16 +612,31 @@
 @code {
     private const string GATEWAY_URL = "http://localhost:5000";
     private HttpClient _http = default!;
+
+    // Pending incidents
     private List<PendingIncident> pendingIncidents = new();
     private bool isLoading = true;
     private bool isProcessing = false;
     private string message = "";
     private bool isSuccess = false;
 
-    protected override void OnInitialized()
+    // Analytics data
+    private int totalIncidents = 0;
+    private int pendingCount = 0;
+    private int approvedCount = 0;
+    private int rejectedCount = 0;
+    private List<TypeStat> typeStats = new();
+    private List<DateStat> dateStats = new();
+
+    protected override async Task OnInitializedAsync()
     {
         _http = HttpClientFactory.CreateClient("AuthenticatedClient");
-        LoadPending();
+
+        // Paralelno učitavanje podataka
+        await Task.WhenAll(
+            LoadPending(),
+            LoadAnalytics()
+        );
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -473,6 +646,44 @@
             await JS.InvokeVoidAsync("initPendingMap");
             await ShowPendingOnMap();
         }
+
+        // Crtaj grafike svaki put kada se komponenta renderuje i ima podataka
+        if (typeStats.Any() || dateStats.Any())
+        {
+            await JS.InvokeVoidAsync("drawAnalyticsCharts", typeStats, dateStats);
+        }
+    }
+
+    private async Task LoadAnalytics()
+    {
+        try
+        {
+            // Summary
+            var summary = await _http.GetFromJsonAsync<SummaryDto>("/api/analytics/summary");
+            if (summary != null)
+            {
+                totalIncidents = summary.Total;
+                pendingCount = summary.Pending;
+                approvedCount = summary.Approved;
+                rejectedCount = summary.Rejected;
+            }
+
+            // By type
+            typeStats = await _http.GetFromJsonAsync<List<TypeStat>>("/api/analytics/by-type") ?? new();
+
+            // By date
+            dateStats = await _http.GetFromJsonAsync<List<DateStat>>("/api/analytics/by-date") ?? new();
+
+            // Log podatke za debug
+            Console.WriteLine($"Type stats: {typeStats.Count}");
+            Console.WriteLine($"Date stats: {dateStats.Count}");
+
+            StateHasChanged(); // Forsiraj re-render
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading analytics: {ex.Message}");
+        }
     }
 
     private async Task LoadPending()
@@ -481,32 +692,41 @@
         message = "";
         StateHasChanged();
 
-        var response = await _http.GetAsync("/api/moderation/pending");
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            pendingIncidents = await response.Content.ReadFromJsonAsync<List<PendingIncident>>() ?? new();
+            var response = await _http.GetAsync("/api/moderation/pending");
 
-            foreach (var incident in pendingIncidents)
+            if (response.IsSuccessStatusCode)
             {
-                if (!string.IsNullOrEmpty(incident.ImageUrl))
+                pendingIncidents = await response.Content.ReadFromJsonAsync<List<PendingIncident>>() ?? new();
+
+                foreach (var incident in pendingIncidents)
                 {
-                    if (incident.ImageUrl.StartsWith("/"))
-                        incident.ImageUrl = GATEWAY_URL + incident.ImageUrl;
-                    else if (!incident.ImageUrl.StartsWith("http"))
-                        incident.ImageUrl = GATEWAY_URL + "/" + incident.ImageUrl;
+                    if (!string.IsNullOrEmpty(incident.ImageUrl))
+                    {
+                        if (incident.ImageUrl.StartsWith("/"))
+                            incident.ImageUrl = GATEWAY_URL + incident.ImageUrl;
+                        else if (!incident.ImageUrl.StartsWith("http"))
+                            incident.ImageUrl = GATEWAY_URL + "/" + incident.ImageUrl;
+                    }
                 }
+
+                await ShowPendingOnMap();
             }
-
-            await ShowPendingOnMap();
+            else
+            {
+                message = "Greška pri učitavanju incidenata.";
+            }
         }
-        else
+        catch (Exception ex)
         {
-            message = "Greška pri učitavanju incidenata.";
+            message = $"Greška: {ex.Message}";
         }
-
-        isLoading = false;
-        StateHasChanged();
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task ShowPendingOnMap()
@@ -529,23 +749,38 @@
         isProcessing = true;
         StateHasChanged();
 
-        var endpoint = action == "odobren" ? $"approve/{id}" : $"reject/{id}";
-        var response = await _http.PostAsync($"/api/moderation/{endpoint}", null);
+        try
+        {
+            var endpoint = action == "odobren" ? $"approve/{id}" : $"reject/{id}";
+            var response = await _http.PostAsync($"/api/moderation/{endpoint}", null);
 
-        if (response.IsSuccessStatusCode)
-        {
-            message = $"Incident {id} uspješno {action}!";
-            isSuccess = true;
-            await LoadPending();
+            if (response.IsSuccessStatusCode)
+            {
+                message = $"Incident {id} uspješno {action}!";
+                isSuccess = true;
+
+                // Ponovo učitaj i analytics i pending
+                await Task.WhenAll(
+                    LoadPending(),
+                    LoadAnalytics()
+                );
+            }
+            else
+            {
+                message = $"Greška pri {action}ju incidenta {id}.";
+                isSuccess = false;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            message = $"Greška pri {action}ju incidenta {id}.";
+            message = $"Greška: {ex.Message}";
             isSuccess = false;
         }
-
-        isProcessing = false;
-        StateHasChanged();
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
     }
 
     private async Task Logout()
@@ -565,6 +800,7 @@
         };
     }
 
+    // DTOs
     public class PendingIncident
     {
         public int Id { get; set; }
@@ -575,5 +811,26 @@
         public string Description { get; set; } = "";
         public string? ImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
+    }
+
+    private class SummaryDto
+    {
+        public int Total { get; set; }
+        public int Pending { get; set; }
+        public int Approved { get; set; }
+        public int Rejected { get; set; }
+    }
+
+    private class TypeStat
+    {
+        public int TypeId { get; set; }
+        public int Count { get; set; }
+        public string TypeName { get; set; } = "";
+    }
+
+    private class DateStat
+    {
+        public string Date { get; set; } = "";
+        public int Count { get; set; }
     }
 }

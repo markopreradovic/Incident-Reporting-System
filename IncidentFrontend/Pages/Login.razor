@@ -7,6 +7,7 @@
 
 <div class="dark-container">
     <div class="login-wrapper">
+        <!-- PRIJAVA SEKCIJA -->
         <div class="header-section">
             <h3 class="page-title">
                 Prijava u sistem
@@ -14,7 +15,7 @@
         </div>
 
         <div class="form-container">
-            <EditForm Model="@model" OnValidSubmit="@HandleLogin">
+            <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
 
@@ -22,18 +23,18 @@
                     <label class="form-label">
                         Korisničko ime
                     </label>
-                    <InputText @bind-Value="model.Username" class="form-input" placeholder="npr. moderator" />
+                    <InputText @bind-Value="loginModel.Username" class="form-input" placeholder="Unesite korisničko ime" />
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">
                         Lozinka
                     </label>
-                    <InputText @bind-Value="model.Password" type="password" class="form-input" placeholder="npr. moderator123" />
+                    <InputText @bind-Value="loginModel.Password" type="password" class="form-input" placeholder="Unesite lozinku" />
                 </div>
 
-                <button type="submit" class="submit-button" disabled="@isLoading">
-                    @if (isLoading)
+                <button type="submit" class="submit-button" disabled="@isLoginLoading">
+                    @if (isLoginLoading)
                     {
                         <span>Prijava u toku...</span>
                     }
@@ -44,11 +45,81 @@
                 </button>
             </EditForm>
 
-            @if (!string.IsNullOrEmpty(message))
+            @if (!string.IsNullOrEmpty(loginMessage))
             {
-                <div class="@(isSuccess ? "alert-success" : "alert-danger")">
-                    <span class="alert-icon">@(isSuccess ? "✓" : "✗")</span>
-                    @message
+                <div class="@(isLoginSuccess ? "alert-success" : "alert-danger")">
+                    <span class="alert-icon">@(isLoginSuccess ? "✓" : "✗")</span>
+                    @loginMessage
+                </div>
+            }
+        </div>
+
+        <!-- REGISTRACIJA SEKCIJA -->
+        <div class="header-section" style="margin-top: 3rem;">
+            <h3 class="page-title">
+                Registracija novog korisnika
+            </h3>
+        </div>
+
+        <div class="form-container">
+            <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Korisničko ime *
+                    </label>
+                    <InputText @bind-Value="registerModel.Username" class="form-input" placeholder="Izaberite korisničko ime" />
+                    <small class="form-hint">Korisničko ime mora biti jedinstveno</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Puno ime i prezime *
+                    </label>
+                    <InputText @bind-Value="registerModel.FullName" class="form-input" placeholder="Npr. Marko Marković" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Email adresa *
+                    </label>
+                    <InputText @bind-Value="registerModel.Email" type="email" class="form-input" placeholder="korisnik@example.com" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Lozinka *
+                    </label>
+                    <InputText @bind-Value="registerModel.Password" type="password" class="form-input" placeholder="Minimum 6 karaktera" />
+                    <small class="form-hint">Lozinka mora imati najmanje 6 karaktera</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Ponovljena lozinka *
+                    </label>
+                    <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="form-input" placeholder="Ponovite lozinku" />
+                </div>
+
+                <button type="submit" class="submit-button" disabled="@isRegisterLoading">
+                    @if (isRegisterLoading)
+                    {
+                        <span>Registracija u toku...</span>
+                    }
+                    else
+                    {
+                        <span>Registruj se</span>
+                    }
+                </button>
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(registerMessage))
+            {
+                <div class="@(isRegisterSuccess ? "alert-success" : "alert-danger")">
+                    <span class="alert-icon">@(isRegisterSuccess ? "✓" : "✗")</span>
+                    @registerMessage
                 </div>
             }
         </div>
@@ -119,6 +190,14 @@
         font-size: 0.95rem;
     }
 
+    .form-hint {
+        display: block;
+        margin-top: 0.4rem;
+        font-size: 0.85rem;
+        color: #8b92a8;
+        font-style: italic;
+    }
+
     .label-icon {
         font-size: 1.1rem;
     }
@@ -133,7 +212,12 @@
         font-size: 1rem;
         transition: all 0.3s ease;
         font-family: 'Open Sans', sans-serif;
+        box-sizing: border-box;
     }
+
+        .form-input::placeholder {
+            color: #6b7280;
+        }
 
         .form-input:focus {
             outline: none;
@@ -144,7 +228,7 @@
 
     .submit-button {
         width: 100%;
-        padding: 1rem 2rem;
+        padding: 0.875rem 1rem;
         background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
         border: none;
         border-radius: 8px;
@@ -160,6 +244,7 @@
         margin-top: 1.5rem;
         box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
         font-family: 'Open Sans', sans-serif;
+        box-sizing: border-box;
     }
 
         .submit-button:hover:not(:disabled) {
@@ -243,47 +328,150 @@
 </style>
 
 @code {
-    private LoginModel model = new();
-    private string message = "";
-    private bool isSuccess = false;
-    private bool isLoading = false;
+    // Login model i state
+    private LoginModel loginModel = new();
+    private string loginMessage = "";
+    private bool isLoginSuccess = false;
+    private bool isLoginLoading = false;
+
+    // Register model i state
+    private RegisterModel registerModel = new();
+    private string registerMessage = "";
+    private bool isRegisterSuccess = false;
+    private bool isRegisterLoading = false;
 
     private async Task HandleLogin()
     {
-        isLoading = true;
-        message = "";
+        isLoginLoading = true;
+        loginMessage = "";
         StateHasChanged();
 
-        var response = await Http.PostAsJsonAsync("http://localhost:5000/api/auth/login", model);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
+            var response = await Http.PostAsJsonAsync("http://localhost:5000/api/auth/login", loginModel);
 
-            await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result!.Token);
-
-            ((JwtAuthenticationStateProvider)AuthProvider).NotifyUserChanged();
-
-            var authState = await AuthProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            message = $"Dobrodošao, {user.Identity?.Name ?? model.Username}!";
-            isSuccess = true;
-
-            if (user.IsInRole("Moderator"))
+            if (response.IsSuccessStatusCode)
             {
-                Navigation.NavigateTo("/moderation", true);
+                var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
+
+                await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result!.Token);
+
+                ((JwtAuthenticationStateProvider)AuthProvider).NotifyUserChanged();
+
+                var authState = await AuthProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+
+                loginMessage = $"Dobrodošao, {user.Identity?.Name ?? loginModel.Username}!";
+                isLoginSuccess = true;
+
+                if (user.IsInRole("Admin"))
+                {
+                    Navigation.NavigateTo("/admin", true);
+                }
+                else if (user.IsInRole("Moderator"))
+                {
+                    Navigation.NavigateTo("/moderation", true);
+                }
+                else
+                {
+                    Navigation.NavigateTo("/report", true);
+                }
             }
             else
             {
-                Navigation.NavigateTo("/", true);
+                loginMessage = "Pogrešno korisničko ime ili lozinka.";
+                isLoginSuccess = false;
             }
         }
-        else
+        catch (Exception ex)
         {
-            message = "Pogrešno korisničko ime ili lozinka.";
-            isSuccess = false;
-            isLoading = false;
+            loginMessage = "Greška prilikom prijave. Molimo pokušajte ponovo.";
+            isLoginSuccess = false;
+        }
+        finally
+        {
+            isLoginLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleRegister()
+    {
+        string registerConfirmPasswordError = "";
+        registerMessage = "";
+
+        if (string.IsNullOrWhiteSpace(registerModel.Username))
+        {
+            registerMessage = "Korisničko ime je obavezno.";
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(registerModel.Email))
+        {
+            registerMessage = "Email je obavezan.";
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(registerModel.FullName))
+        {
+            registerMessage = "Puno ime je obavezno.";
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(registerModel.Password))
+        {
+            registerConfirmPasswordError = "Lozinka je obavezna.";
+            StateHasChanged();
+            return;
+        }
+
+        if (registerModel.Password != registerModel.ConfirmPassword)
+        {
+            registerConfirmPasswordError = "Lozinke se ne poklapaju.";
+            StateHasChanged();
+            return;
+        }
+
+        isRegisterLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var registerRequest = new
+            {
+                Username = registerModel.Username,
+                Password = registerModel.Password,
+                Email = registerModel.Email,
+                FullName = registerModel.FullName,
+                Role = "User"  
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                registerMessage = "Registracija uspešna! Sada se možete prijaviti.";
+                isRegisterSuccess = true;
+                registerModel = new(); 
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                registerMessage = $"Greška pri registraciji: {response.StatusCode} - {errorContent}";
+                isRegisterSuccess = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            registerMessage = $"Došlo je do greške: {ex.Message}";
+            isRegisterSuccess = false;
+        }
+        finally
+        {
+            isRegisterLoading = false;
             StateHasChanged();
         }
     }
@@ -292,6 +480,15 @@
     {
         public string Username { get; set; } = "";
         public string Password { get; set; } = "";
+    }
+
+    public class RegisterModel
+    {
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string ConfirmPassword { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string FullName { get; set; } = "";
     }
 
     public class AuthResponse

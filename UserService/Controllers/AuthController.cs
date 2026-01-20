@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,7 +11,7 @@ using UserService.Models;
 namespace UserService.Controllers;
 
 [ApiController]
-[Route("api/auth")] // Fiksna ruta – Ocelot je podešen na /api/auth/{catchAll}
+[Route("api/auth")]
 public class AuthController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
@@ -75,32 +76,67 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterModel model)
     {
-        if (string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password))
-            return BadRequest("Korisničko ime i lozinka su obavezni.");
+        if (string.IsNullOrWhiteSpace(model.Username))
+            return BadRequest(new { message = "Korisničko ime je obavezno." });
+
+        if (string.IsNullOrWhiteSpace(model.Password))
+            return BadRequest(new { message = "Lozinka je obavezna." });
+
+        if (string.IsNullOrWhiteSpace(model.Email))
+            return BadRequest(new { message = "Email adresa je obavezna." });
+
+        if (string.IsNullOrWhiteSpace(model.FullName))
+            return BadRequest(new { message = "Puno ime i prezime je obavezno." });
+
+        var existingUser = await _userManager.FindByNameAsync(model.Username.Trim());
+        if (existingUser != null)
+            return BadRequest(new { message = "Korisničko ime već postoji." });
+
+        var existingEmail = await _userManager.FindByEmailAsync(model.Email.Trim());
+        if (existingEmail != null)
+            return BadRequest(new { message = "Email adresa već postoji u sistemu." });
 
         var user = new AppUser
         {
             UserName = model.Username.Trim(),
-            Email = model.Email?.Trim(),
-            FullName = model.FullName?.Trim() ?? ""
+            Email = model.Email.Trim(),
+            FullName = model.FullName.Trim()
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
 
         if (result.Succeeded)
         {
-            var role = string.IsNullOrWhiteSpace(model.Role) ? "User" : model.Role.Trim();
-            await _userManager.AddToRoleAsync(user, role);
+            var roleToAssign = string.IsNullOrWhiteSpace(model.Role) ? "User" : model.Role;
 
-            return Ok(new { message = "Korisnik uspješno kreiran.", role });
+            if (roleToAssign == "User" || roleToAssign == "Moderator" || roleToAssign == "Admin") 
+            {
+                await _userManager.AddToRoleAsync(user, roleToAssign);
+            }
+            else
+            {
+                await _userManager.AddToRoleAsync(user, "User");
+            }
+
+            return Ok(new
+            {
+                message = "Korisnik uspješno kreiran.",
+                userId = user.Id,
+                userName = user.UserName,
+                email = user.Email,
+                fullName = user.FullName
+            });
         }
 
-        return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+        var errors = result.Errors.Select(e => e.Description).ToList();
+        return BadRequest(new { message = "Registracija nije uspjela.", errors });
     }
 
     [HttpGet("users")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllUsers()
     {
         var users = await _userManager.Users.AsNoTracking().ToListAsync();
@@ -110,17 +146,76 @@ public class AuthController : ControllerBase
         foreach (var u in users)
         {
             var roles = await _userManager.GetRolesAsync(u);
+            var role = roles.FirstOrDefault() ?? "User";
+
             result.Add(new
             {
                 u.Id,
-                u.UserName,
+                Username = u.UserName,
                 u.Email,
                 u.FullName,
-                Roles = roles
+                Role = role
             });
         }
 
         return Ok(result);
+    }
+
+    [HttpPut("users/{userId}/role")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateUserRole(string userId, [FromBody] UpdateRoleRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Role))
+            return BadRequest(new { message = "Uloga je obavezna." });
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return NotFound(new { message = "Korisnik nije pronađen." });
+
+        // Ne dozvoljavaj promjenu sopstvene uloge
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (currentUserId == userId)
+            return BadRequest(new { message = "Ne možete promijeniti sopstvenu ulogu." });
+
+        var currentRoles = await _userManager.GetRolesAsync(user);
+
+        // Ukloni sve trenutne uloge
+        if (currentRoles.Any())
+        {
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            if (!removeResult.Succeeded)
+                return BadRequest(new { message = "Greška pri uklanjanju starih uloga." });
+        }
+
+        // Dodaj novu ulogu
+        var addResult = await _userManager.AddToRoleAsync(user, request.Role);
+        if (!addResult.Succeeded)
+            return BadRequest(new { message = "Greška pri dodavanju nove uloge." });
+
+        return Ok(new { message = $"Uloga korisnika uspješno ažurirana na {request.Role}." });
+    }
+
+    [HttpDelete("users/{userId}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteUser(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return NotFound(new { message = "Korisnik nije pronađen." });
+
+        // Ne dozvoljavaj brisanje samog sebe
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (currentUserId == userId)
+            return BadRequest(new { message = "Ne možete obrisati sopstveni nalog." });
+
+        var result = await _userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors.Select(e => e.Description).ToList();
+            return BadRequest(new { message = "Brisanje korisnika nije uspjelo.", errors });
+        }
+
+        return Ok(new { message = "Korisnik uspješno obrisan." });
     }
 }
 
@@ -136,5 +231,10 @@ public class RegisterModel
     public string Password { get; set; } = "";
     public string Email { get; set; } = "";
     public string FullName { get; set; } = "";
-    public string? Role { get; set; } // "User" ili "Moderator" ili "Administrator"
+    public string? Role { get; set; } // "User" ili "Moderator" ili "Admin" - default je "User"
+}
+
+public class UpdateRoleRequest
+{
+    public string Role { get; set; } = "";
 }

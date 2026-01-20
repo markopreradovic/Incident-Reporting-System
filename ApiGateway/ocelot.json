@@ -49,6 +49,14 @@
       "UpstreamPathTemplate": "/images/{everything}",
       "UpstreamHttpMethod": [ "GET", "HEAD" ],
       "ServiceName": "incident-service"
+    },
+    {
+      "DownstreamPathTemplate": "/api/analytics/{everything}",
+      "DownstreamScheme": "http",
+      "UpstreamPathTemplate": "/api/analytics/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "ServiceName": "analytics-service",
+      "Priority": 10
     }
   ],
   "GlobalConfiguration": {
