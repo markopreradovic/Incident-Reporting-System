@@ -1,4 +1,4 @@
-# Incident Reporting System
+# Incident Reporting System: A Microservices-Based Platform for Real-World Incident Management
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Docker](https://img.shields.io/badge/Docker-Containerized-blue)](https://www.docker.com)
@@ -7,155 +7,116 @@
 [![Ocelot](https://img.shields.io/badge/API%20Gateway-Ocelot-lightgrey)](https://ocelot.readthedocs.io)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-success)](https://github.com/features/actions)
 
-A full-stack, microservices-based incident reporting platform built with modern cloud-native principles, containerization, service discovery, centralized configuration, API gateway routing, and automated CI/CD.
+A full-stack, microservices-based incident reporting platform engineered with modern cloud-native principles, featuring containerization, dynamic service discovery, centralized configuration management, robust API gateway routing, and an automated Continuous Integration/Continuous Deployment (CI/CD) pipeline.
 
 ---
 
-## Project Overview
+## 1. Executive Summary and Project Overview
 
-The **Incident Reporting System** enables citizens to report real-world incidents (traffic problems, public order violations, communal issues) using an interactive map, detailed descriptions, categories, and images.
+The **Incident Reporting System** is designed to provide a comprehensive digital solution for citizens to report real-world incidents, such as traffic issues, public order violations, or communal problems, using an intuitive interface. The platform facilitates the submission of detailed reports, including location data via an interactive map, categorical information, rich descriptions, and image uploads.
 
-Reports are stored in a **pending** state until reviewed and approved by moderators. Only approved incidents become publicly visible on a filtered map view.
+A core principle of the system is the controlled dissemination of information. All submitted reports are initially held in a **pending** state, requiring review and approval by designated moderators. Only incidents that have been formally approved become publicly visible on the filtered map view, ensuring data quality and relevance for the general public.
 
-The system is architected as a set of independent, loosely coupled microservices communicating exclusively through a single API Gateway.
-
----
-
-## Key Features
-
-### Core User Functionality
-
-* Interactive map (Leaflet.js) for selecting incident location
-* Automatic geolocation or manual map click
-* Incident categorization (type and subtype)
-* Rich description input
-* Image upload with client-side preview
-* Reports submitted in pending status
+The system's architecture is fundamentally based on a set of independent, loosely coupled microservices. This design choice enhances scalability, maintainability, and fault isolation. All external communication is strictly managed through a single, unified API Gateway.
 
 ---
 
-### Public Anonymous Access
+## 2. System Architecture and Microservices Breakdown
 
-* View approved incidents on a public map
-* Filtering by:
+The platform adheres to a microservices architectural pattern, where each service is responsible for a distinct business capability. This structure allows for independent deployment and technology selection for each component.
 
-  * Time range (today, last week, last month, custom)
-  * Incident type
-* Popup details with description, timestamp, type, and image
+### 2.1. Microservices Overview
 
----
+The system comprises five primary microservices, each registered with the Consul service discovery agent and exposed via the Ocelot API Gateway.
 
-### Moderator Dashboard
+| Microservice | Primary Functionality | Key Technologies |
+| :--- | :--- | :--- |
+| **UserService** | User authentication, authorization (RBAC), user management, and role assignment. | .NET 8, JWT, PostgreSQL |
+| **IncidentService** | Incident submission, storage, image handling, and public incident retrieval. | .NET 8, EF Core, PostgreSQL |
+| **ModerationService** | Management of pending incidents, approval/rejection logic. | .NET 8, EF Core, PostgreSQL |
+| **AnalyticsService** | Data analysis and visualization of incident metrics. | .NET 8, Data Visualization Libraries |
+| **ConfigServer** | Centralized configuration management using a Git backend. | Steeltoe Config Server |
 
-* List view of pending incidents
-* Map view for spatial context
-* Approve or reject actions
-* Protected routes for Moderator role only
+### 2.2. Data Flow and Infrastructure
 
----
-
-### Authentication & Authorization
-
-* JWT-based authentication
-* Role-based access control:
-
-  * **User** — report incidents, view approved ones
-  * **Moderator** — moderate pending reports
-* Automatic role-based redirection after login
-* Protected endpoints using JWT Bearer authentication
+1.  **Frontend (Blazor WebAssembly)**: Runs client-side, communicating exclusively with the API Gateway. It includes the **Admin Page** for user management.
+2.  **API Gateway (Ocelot)**: Acts as the single entry point, handling request routing, authentication, and authorization enforcement based on dynamic service resolution via Consul.
+3.  **Service Discovery (Consul)**: All microservices register themselves upon startup, enabling the API Gateway to dynamically locate and route requests without hardcoding service addresses.
+4.  **Persistent Storage**: PostgreSQL is used for structured data storage across all services, while a Docker volume (`incident_images`) ensures persistence for uploaded image files.
 
 ---
 
-## Advanced Architecture Features
+## 3. Advanced Features and Capabilities
 
-* **Service Discovery** with HashiCorp Consul
-* **API Gateway** using Ocelot
-* **Centralized Configuration** via Steeltoe Config Server (Git backend)
-* **Containerization** with Docker and docker-compose
-* **CI/CD** pipeline using GitHub Actions
-* **Health Checks** for all services
-* **Persistent Storage**
+The system incorporates several advanced features to ensure robust security, comprehensive data analysis, and efficient administration.
 
-  * PostgreSQL for data
-  * Docker volume for images
-* **Static File Serving** for incident images
+### 3.1. Incident Analytics Service 
 
----
+The newly introduced `analytics-service` is dedicated to providing fundamental data analysis and visualization capabilities for incident data. This service processes incident records to generate actionable insights, supporting data-driven decision-making for administrators and moderators.
 
-## Technology Stack
+The service provides analysis across three key dimensions:
 
-### Backend
+*   **Temporal Analysis (Time)**: Visualization of incident reporting trends, including daily, weekly, and monthly submission rates. This helps identify peak reporting periods and temporal patterns.
+*   **Geospatial Analysis (Location)**: Mapping the geographical distribution of incidents. This includes generating heatmaps or cluster visualizations to highlight high-incidence areas.
+*   **Categorical Analysis (Type)**: Breakdown of incidents by category and subcategory, allowing for a clear understanding of the most prevalent types of reported issues.
 
-* .NET 8 (ASP.NET Core Web API)
-* Entity Framework Core
-* PostgreSQL 16
-* Ocelot API Gateway
-* Steeltoe Config Server & Actuators
-* HashiCorp Consul
-* JWT Bearer Authentication
-* Swagger / OpenAPI
+Access to the analytics dashboard is restricted to users with the **Admin** and **Moderator** roles.
 
-### Frontend
+### 3.2. Advanced Authentication and Authorization 
 
-* Blazor WebAssembly
-* Leaflet.js
-* Bootstrap 5 + custom CSS
+The system employs a robust, JWT-based authentication mechanism coupled with an advanced Role-Based Access Control (RBAC) model, managed by the `UserService`. This expansion allows for granular control over system access.
 
-### DevOps & Infrastructure
+#### Role Definitions
 
-* Docker & Docker Compose
-* GitHub Actions
-* PostgreSQL
-* Consul
+The system defines three distinct user roles, each with specific responsibilities and access privileges:
 
----
+| Role | Primary Responsibilities | Access Privileges |
+| :--- | :--- | :--- |
+| **Admin** | Full system management, user administration, analytics access, and moderation. | All endpoints, including user creation/deletion and role modification. |
+| **Moderator** | Incident review and approval/rejection, analytics access. | Moderation endpoints and read-only access to analytics data. |
+| **User** | Incident reporting and viewing of approved public incidents. | Incident submission endpoints and public read endpoints. |
 
-## System Architecture Overview
+#### Endpoint Access Control
 
-1. **Frontend (Blazor WebAssembly)**
+The `UserService` is responsible for defining and managing the mapping between user roles and access rights to individual API endpoints. This ensures that sensitive operations, such as user deletion or role changes, are strictly limited to the **Admin** role, thereby enforcing the principle of least privilege.
 
-   * Runs in the browser
-   * Communicates only with API Gateway (`http://localhost:5000`)
-   * Uses JWT tokens stored in local storage
+### 3.3. Admin Dashboard
 
-2. **API Gateway (Ocelot)**
+A dedicated section within the Frontend application, accessible only to the **Admin** role, provides essential administrative tools for user lifecycle management:
 
-   * Single public entry point
-   * Dynamic routing using Consul
-   * Authentication and authorization
-   * Static image routing (`/images/incidents/{filename}`)
-
-3. **Microservices**
-
-   * **UserService** — authentication, JWT, roles
-   * **IncidentService** — incidents, images, public endpoints
-   * **ModerationService** — pending list, approve/reject
-   * **ConfigServer** — centralized configuration
-
-4. **Service Discovery & Configuration**
-
-   * Services register in Consul on startup
-   * Ocelot resolves services dynamically
-   * Configuration pulled from Git via ConfigServer
-
-5. **Image Handling**
-
-   * Stored in `wwwroot/images/incidents`
-   * Persisted using Docker volume `incident_images`
-   * Served publicly through API Gateway
-
-6. **Database**
-
-   * PostgreSQL container
-   * EF Core migrations applied on startup
+*   **User Listing**: Display of all registered users within the system.
+*   **Role Modification**: Capability to change the role of any existing user (e.g., changing a 'User' to a 'Moderator' or 'Admin').
+*   **User Deletion**: Functionality to permanently remove user accounts from the system.
 
 ---
 
-## Project Structure
+## 4. Technology Stack
+
+The platform leverages a modern, open-source technology stack, focusing on performance, scalability, and developer productivity.
+
+| Component | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Backend Framework** | .NET 8 (ASP.NET Core Web API) | Core application logic and microservices development. |
+| **Database** | PostgreSQL 16 | Primary relational data store. |
+| **ORM** | Entity Framework Core | Object-Relational Mapping for data access. |
+| **API Gateway** | Ocelot | Request routing, authentication, and service aggregation. |
+| **Service Discovery** | HashiCorp Consul | Dynamic service registration and lookup. |
+| **Configuration** | Steeltoe Config Server | Centralized configuration management (Git-backed). |
+| **Frontend** | Blazor WebAssembly | Client-side web application framework. |
+| **Mapping** | Leaflet.js | Interactive map visualization and location selection. |
+| **Containerization** | Docker & Docker Compose | Environment packaging and orchestration. |
+| **CI/CD** | GitHub Actions | Automated build, test, and deployment pipeline. |
+
+---
+
+## 5. Project Structure
+
+The repository is organized to clearly separate the concerns of each microservice and infrastructure component. The new `AnalyticsService` is integrated at the root level.
 
 ```
 Incident-Reporting-System/
 ├── ApiGateway/
+├── AnalyticsService/  <-- NEW MICROSERVICE
 ├── ConfigServer/
 ├── IncidentService/
 │   └── wwwroot/images/incidents/
@@ -169,95 +130,81 @@ Incident-Reporting-System/
 
 ---
 
-## Setup & Running Locally
+## 6. Setup and Running Locally
 
-### Prerequisites
+### 6.1. Prerequisites
 
-* Docker Desktop (with Docker Compose)
-* Git
-* Web browser
+*   Docker Desktop (with Docker Compose)
+*   Git
+*   Web browser
 
----
+### 6.2. Quick Start
 
-### Quick Start
+The entire system can be launched using a single command, leveraging Docker Compose to build and orchestrate all microservices, the database, and infrastructure components.
 
-1. Clone the repository
+1.  Clone the repository:
 
 ```bash
 git clone https://github.com/markopreradovic/Incident-Reporting-System.git
 cd Incident-Reporting-System
 ```
 
-2. Start the system
+2.  Start the system:
 
 ```bash
 docker compose up --build
 ```
 
-3. Wait approximately 60 seconds for all services to become healthy.
+3.  Allow approximately 60 seconds for all services to initialize, register with Consul, and for the database migrations to complete.
 
 ---
 
-## Access Points
+## 7. Access Points and Default Credentials
 
-* Frontend: [http://localhost:7274](http://localhost:7274)
-* API Gateway: [http://localhost:5000](http://localhost:5000)
-* API Swagger: [http://localhost:5000/swagger](http://localhost:5000/swagger)
-* Consul UI: [http://localhost:8500](http://localhost:8500)
-* Config Server health: [http://localhost:8888/actuator/health](http://localhost:8888/actuator/health)
-* PostgreSQL: localhost:5433
+### 7.1. Access Points
 
----
+| Component | URL | Description |
+| :--- | :--- | :--- |
+| **Frontend Application** | `http://localhost:7274` | Main user interface for reporting and viewing incidents. |
+| **API Gateway** | `http://localhost:5000` | Unified API endpoint for all microservices. |
+| **API Documentation** | `http://localhost:5000/swagger` | Swagger UI for exploring all exposed API endpoints. |
+| **Service Discovery UI** | `http://localhost:8500` | HashiCorp Consul web interface. |
+| **Config Server Health** | `http://localhost:8888/actuator/health` | Health check endpoint for the Centralized Configuration Server. |
+| **PostgreSQL** | `localhost:5433` | Database connection port. |
 
-## Default Credentials
+### 7.2. Default Credentials
 
-**Moderator**
+The system is pre-populated with default users for testing the three defined roles:
 
-* Username: `moderator`
-* Password: `moderator1`
-
-**Regular User**
-
-* Username: `string1`
-* Password: `string123`
-
----
-
-## Configuration Management
-
-All configurations (connection strings, JWT secrets, logging levels) are stored in a Git repository and served via ConfigServer at runtime.
-
-Configuration changes do not require rebuilding or restarting containers.
+| Role | Username | Password | Notes |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `string3` | `string123` | Full administrative access, including user management. |
+| **Moderator** | `moderator` | `moderator1` | Access to the Moderation Dashboard and Analytics. |
+| **Regular User** | `string1` | `string123` | Standard user for incident reporting. |
 
 ---
 
-## Image Storage & Serving
+## 8. Configuration and Image Management
 
-* Upload endpoint: `/api/incidents/upload-image`
-* Stored in `IncidentService/wwwroot/images/incidents`
-* Persisted via Docker volume
-* Public access:
+### 8.1. Centralized Configuration Management
 
-```
-http://localhost:5000/images/incidents/{filename}
-```
+All critical system configurations, including database connection strings, JWT secrets, and logging levels, are externalized. They are stored in a Git repository and dynamically served to all microservices via the **ConfigServer** at runtime. This design allows for configuration changes without requiring service rebuilds or container restarts.
 
----
+### 8.2. Image Storage and Serving
 
-## CI/CD Pipeline
+Incident images are handled through a dedicated process:
 
-GitHub Actions automatically:
-
-* Builds all services on push to `main`
-* Creates Docker images
-* Pushes images to Docker Hub:
-
-  ```
-  markopreradovic/incidentreportingsystem-*
-  ```
+*   **Upload Endpoint**: Images are submitted via the `/api/incidents/upload-image` endpoint.
+*   **Storage**: Files are stored on the file system within the `IncidentService/wwwroot/images/incidents` directory.
+*   **Persistence**: A Docker volume ensures that image data persists across container lifecycles.
+*   **Public Access**: Images are served publicly and securely through the API Gateway via the route: `http://localhost:5000/images/incidents/{filename}`.
 
 ---
 
+## 9. CI/CD Pipeline
 
+The Continuous Integration and Continuous Deployment pipeline is automated using GitHub Actions. The pipeline is configured to:
 
-
+*   Automatically build all microservices upon a push to the `main` branch.
+*   Create optimized Docker images for each service.
+*   Push the resulting images to Docker Hub under the namespace: `markopreradovic/incidentreportingsystem-*`.
