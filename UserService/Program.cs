@@ -10,14 +10,11 @@ using UserService.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Config Server
 builder.Configuration.AddConfigServer();
 
-// DB Context
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql("Host=postgres;Port=5432;Database=incidentdb;Username=postgres;Password=postgres"));
 
-// Identity
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
