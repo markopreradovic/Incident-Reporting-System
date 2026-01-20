@@ -29,10 +29,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// JWT Authentication - KLJUČNA IZMENA!
 builder.Services.AddAuthentication(options =>
 {
-    // Ovo je KRITIČNO - postavlja JWT kao default scheme
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -40,7 +38,7 @@ builder.Services.AddAuthentication(options =>
 .AddJwtBearer(options =>
 {
     options.SaveToken = true;
-    options.RequireHttpsMetadata = false; // Za development
+    options.RequireHttpsMetadata = false; 
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -53,7 +51,7 @@ builder.Services.AddAuthentication(options =>
             Encoding.UTF8.GetBytes("tvoj-super-tajni-kljuc-od-barem-32-karaktera!!"))
     };
 
-    // Opciono: dodaj event handlers za debugging
+    
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
@@ -123,7 +121,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAll");
 app.UseRouting();
 
-// VAŽNO: UseAuthentication MORA biti PRIJE UseAuthorization!
+
 app.UseAuthentication();
 app.UseAuthorization();
 
