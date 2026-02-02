@@ -31,7 +31,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = "IncidentSystem",
             ValidAudience = "IncidentSystem",
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes("tvoj-super-tajni-kljuc-od-barem-32-karaktera!!")),
+                Encoding.UTF8.GetBytes("test-super-tajni-kljuc-od-barem-32-karaktera!!")),
             RoleClaimType = System.Security.Claims.ClaimTypes.Role
         };
     });
