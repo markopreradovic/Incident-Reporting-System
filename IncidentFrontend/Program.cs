@@ -21,7 +21,7 @@ builder.Services.AddHttpClient("AuthenticatedClient", client =>
 }).AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("AuthenticatedClient"));
-//Test commit 2
+//Test commit 3
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
